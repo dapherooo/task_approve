@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  notionEmail  String?       @unique
+  notionUserId String?       @unique
+  telegramId   String?       @unique
+  employeeId   String?       @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  assignmentsAsPM       Assignment[] @relation("AssignmentPM")
+  assignmentsAsAssignee Assignment[] @relation("AssignmentAssignee")
+
+  submissionsAsAssignee     Submission[]  @relation("SubmissionAssignee")
+  submissionsAsUser         Submission[]  @relation("SubmissionUser")
+  submissionsAsPM           Submission[]  @relation("SubmissionPM")
+}
+
+model Assignment {
+  id           Int              @id @default(autoincrement())
+  notionPageId String?          @unique
+  wpId         String
+  wpName       String
+  projectName  String?
+  dueDate      DateTime?
+  linkPage     String?
+
+  pmId         Int
+  pm           User             @relation("AssignmentPM", fields: [pmId], references: [id])
+
+  assigneeId   Int
+  assignee     User             @relation("AssignmentAssignee", fields: [assigneeId], references: [id])
+
+  status       AssignmentStatus @default(PENDING)
+  assignedAt   DateTime         @default(now())
+
+  pmLog        PMLog?
+  assigneeLog  AssigneeLog?
+}
+
+model PMLog {
+  id           Int        @id @default(autoincrement())
+  assignmentId Int        @unique
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  sentAt       DateTime   @default(now())
+  message      String
+}
+
+model AssigneeLog {
+  id             Int        @id @default(autoincrement())
+  assignmentId   Int        @unique
+  assignment     Assignment @relation(fields: [assignmentId], references: [id])
+  receivedAt     DateTime   @default(now())
+  message        String
+  respond        String?
+  respondAt      DateTime?
+  reasonRejection String?
+}
+
+enum AssignmentStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Submission {
+  id            Int              @id @default(autoincrement())
+  notionPageId  String           @unique
+  wpName        String
+  projectName   String?
+  submittedDate DateTime?
+  pageLink      String?
+  deliverableName String?
+
+  assigneeId    Int
+  assignee      User             @relation("SubmissionAssignee", fields: [assigneeId], references: [id])
+
+  userId        Int
+  user          User             @relation("SubmissionUser", fields: [userId], references: [id])
+
+  pmId          Int
+  pm            User             @relation("SubmissionPM", fields: [pmId], references: [id])
+
+  status        SubmissionStatus @default(SUBMITTED)
+  createdAt     DateTime         @default(now())
+
+  assigneeLog   SubmissionAssigneeLog?
+  userLog       SubmissionUserLog?
+}
+
+model SubmissionAssigneeLog {
+  id           Int        @id @default(autoincrement())
+  submissionId Int        @unique
+  submission   Submission @relation(fields: [submissionId], references: [id])
+  message      String
+  sentAt       DateTime   @default(now())
+}
+
+model SubmissionUserLog {
+  id           Int        @id @default(autoincrement())
+  submissionId Int        @unique
+  submission   Submission @relation(fields: [submissionId], references: [id])
+  message      String
+  sentAt       DateTime   @default(now())
+  respond      String?
+  respondAt    DateTime?
+  declineNotes String?
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  APPROVED
+  DECLINED
+}
