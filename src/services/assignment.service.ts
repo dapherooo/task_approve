@@ -88,13 +88,13 @@ export const assignmentService = {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
+          // hour: '2-digit',
+          //minute: '2-digit',
         })
       : '-';
 
     const assigneeMessage =
-      `Halo ${assignee.name}, ada penugasan baru untuk Work Package.\n\n` +
+      `Halo ${assignee.name}, ada penugasan baru untuk.\n\n` +
       `📦 Work Package: ${wpId} - ${wp.wpName}\n` +
       `🗓️ Due Date: ${dueFormatted}\n\n` +
       `📁 Project: ${wp.projectName}\n` +

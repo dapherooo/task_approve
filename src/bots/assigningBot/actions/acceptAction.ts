@@ -44,7 +44,9 @@ export const acceptAction = async (ctx: BotContext) => {
     const updatedMessage =
       `${assigneeLog?.message}\n` +
       `----------------------------------------------------\n` +
-      `Anda telah menerima tugas ini pada tanggal: ${respondDateFormatted}`;
+      `Anda telah menerima tugas ini pada tanggal: ${respondDateFormatted}\n\n` +
+      `Untuk Submit Deliverable, silahkan klik link di bawah ini:\n` +
+      `https://form.fillout.com/t/rMSmF6wknyus`;
 
     await ctx.editMessageText(updatedMessage);
     await ctx.answerCbQuery('✅ Tugas diterima!');
@@ -54,8 +56,8 @@ export const acceptAction = async (ctx: BotContext) => {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
+          // hour: '2-digit',
+          // minute: '2-digit',
         })
       : '-';
 

@@ -6,7 +6,7 @@ export const startCommand = async (ctx: BotContext) => {
     `👋 Halo ${name}!\n\n` +
       `Selamat datang di Task Assignment Bot.\n\n` +
       `Gunakan perintah berikut:\n` +
-      `/assign [WP_ID] - Menugaskan Work Package\n\n` +
+      `/assign [ID]\n\n` +
       `Contoh:\n` +
       `/assign AFC-001/1.1.1`,
   );
