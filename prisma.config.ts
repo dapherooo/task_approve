@@ -1,7 +1,5 @@
-import { defineConfig } from '@prisma/internals';
+// Prisma v7 config
+// Connection managed via PrismaClient adapter in src/prisma/client.ts
 
-export default defineConfig({
-  seed: async ({ PrismaClient }) => {
-    // Seeding logic here if needed
-  },
-});
+export default {};
+
