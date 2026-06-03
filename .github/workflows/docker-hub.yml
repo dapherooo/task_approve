@@ -24,6 +24,8 @@ jobs:
   lint_and_build:
     name: Lint & Build TypeScript
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://user:password@localhost:5432/build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
