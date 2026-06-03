@@ -12,6 +12,6 @@
     "forceConsistentCasingInFileNames": true,
     "types": []
   },
-  "include": ["src/**/*", "prisma.config.ts"],
+  "include": ["src/**/*", "prisma.config.js"],
   "exclude": ["node_modules"]
 }
