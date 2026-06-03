@@ -3,12 +3,11 @@ npm-debug.log
 .git
 .gitignore
 .env
-.env.example
 .vscode
 .idea
 dist
 logs
 .DS_Store
-*.md
 .dockerignore
 Dockerfile
+.github
