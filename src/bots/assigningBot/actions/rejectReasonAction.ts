@@ -1,4 +1,5 @@
 import { BotContext } from '../../../types/context';
+import { prisma } from "../../../prisma/client";
 import { assignmentRepository } from '../../../repositories/assignment.repository';
 
 export const rejectReasonHandler = async (ctx: BotContext) => {
@@ -11,7 +12,7 @@ export const rejectReasonHandler = async (ctx: BotContext) => {
   const assignment = await prisma.assignment.findUnique({
   where: { id: assignmentId },
   include: { pm: true, assignee: true },
-});
+  });
   if (!assignment) return;
 
   const assigneeLog = await assignmentRepository.findAssigneeLog(assignmentId);
