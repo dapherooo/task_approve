@@ -8,7 +8,10 @@ export const rejectReasonHandler = async (ctx: BotContext) => {
   const reason = ctx.message && 'text' in ctx.message ? ctx.message.text : '';
   if (!reason) return;
 
-  const assignment = await assignmentRepository.findById(assignmentId);
+  const assignment = await prisma.assignment.findUnique({
+  where: { id: assignmentId },
+  include: { pm: true, assignee: true },
+});
   if (!assignment) return;
 
   const assigneeLog = await assignmentRepository.findAssigneeLog(assignmentId);
