@@ -76,7 +76,6 @@ jobs:
   sonarqube-scan:
     name: SonarQube Scan
     runs-on: ubuntu-latest
-    if: ${{ secrets.SONAR_HOST_URL != '' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
