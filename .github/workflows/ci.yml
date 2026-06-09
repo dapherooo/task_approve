@@ -10,6 +10,7 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_OPTIONS: --no-warnings
 
 jobs:
   # ============================================
@@ -26,11 +27,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        continue-on-error: true
 
       - name: Run TypeScript Compiler Check
         run: npm run build
@@ -45,11 +50,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        continue-on-error: true
 
       - name: Build project
         run: npm run build
@@ -76,11 +85,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        continue-on-error: true
 
       - name: Build project
         run: npm run build
@@ -120,15 +133,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Run npm audit
-        run: npm audit --audit-level=high
-        continue-on-error: true
+        run: npm audit --audit-level=moderate --legacy-peer-deps || true
 
   sast-scan-semgrep:
     name: SAST Scan (Semgrep)
@@ -159,11 +171,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        continue-on-error: true
 
       - name: Build application
         run: npm run build
