@@ -191,6 +191,7 @@ jobs:
         env:
           PORT: 3000
           NODE_ENV: production
+          DATABASE_URL: postgresql://user:password@localhost:5432/ci_test
 
       - name: Wait for application to start
         run: |
@@ -214,10 +215,9 @@ jobs:
 
       - name: Run k6 smoke test
         run: |
-          k6 run loadtest/script.js --summary-export=/tmp/k6-summary.json 2>&1 || true
+          k6 run loadtest/script.js --summary-export=/tmp/k6-summary.json
         env:
           BASE_URL: http://localhost:3000
-        continue-on-error: true
 
       - name: Cleanup
         if: always()
@@ -233,7 +233,7 @@ jobs:
   build-and-push:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
-    needs: [lint, unit-test, sonarqube-scan, secret-scan-gitleaks, sca-scan-npm, sast-scan-semgrep]
+    needs: [lint, unit-test, sonarqube-scan, secret-scan-gitleaks, sca-scan-npm, sast-scan-semgrep, k6-smoke-test]
     permissions:
       contents: read
 
