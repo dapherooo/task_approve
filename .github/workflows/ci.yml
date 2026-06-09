@@ -200,25 +200,39 @@ jobs:
 
       - name: Start application
         run: |
-          node dist/main.js &
+          node dist/main.js > /tmp/app.log 2>&1 &
           echo $! > /tmp/app.pid
+          sleep 2
+          if ! kill -0 $(cat /tmp/app.pid) 2>/dev/null; then
+            echo "❌ Application process died. Logs:"
+            cat /tmp/app.log
+            exit 1
+          fi
         env:
           PORT: 3000
           NODE_ENV: production
           DATABASE_URL: postgresql://user:password@localhost:5432/ci_test
+          SUBMITTING_BOT_TOKEN: mock-token-ci
+          ASSIGNING_BOT_TOKEN: mock-token-ci
 
       - name: Wait for application to start
         run: |
           for i in {1..30}; do
             if curl -s http://localhost:3000 > /dev/null 2>&1; then
-              echo "Application is ready"
+              echo "✅ Application is ready"
               exit 0
             fi
-            echo "Waiting for application... ($i/30)"
+            if ! kill -0 $(cat /tmp/app.pid) 2>/dev/null; then
+              echo "❌ Application process crashed. Logs:"
+              cat /tmp/app.log
+              exit 1
+            fi
+            echo "⏳ Waiting for application... ($i/30)"
             sleep 1
           done
-          echo "Warning: Application may not be running"
-          exit 0
+          echo "❌ Application failed to respond within 30s. Logs:"
+          cat /tmp/app.log
+          exit 1
 
       - name: Install k6
         run: |
@@ -232,6 +246,12 @@ jobs:
           k6 run loadtest/script.js --summary-export=/tmp/k6-summary.json
         env:
           BASE_URL: http://localhost:3000
+
+      - name: Show application logs on failure
+        if: failure()
+        run: |
+          echo "=== Application Logs ==="
+          cat /tmp/app.log || echo "No app logs found"
 
       - name: Cleanup
         if: always()
