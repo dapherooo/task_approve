@@ -19,19 +19,47 @@ app.listen(PORT, () => {
 
 // Assigning Bot
 const assigningBot = createAssigningBot(process.env.ASSIGNING_BOT_TOKEN!);
-assigningBot.launch();
-console.log('✅ Assigning Bot aktif');
+assigningBot
+  .launch()
+  .then(() => {
+    console.log('✅ Assigning Bot aktif');
+  })
+  .catch((error) => {
+    console.warn('⚠️  Assigning Bot failed to launch:', (error as Error).message);
+  });
 
 // Submitting Bot
-submittingBot.launch();
-console.log('✅ Submitting Bot aktif');
+submittingBot
+  .launch()
+  .then(() => {
+    console.log('✅ Submitting Bot aktif');
+  })
+  .catch((error) => {
+    console.warn('⚠️  Submitting Bot failed to launch:', (error as Error).message);
+  });
 
 // Graceful stop
 process.once('SIGINT', () => {
-  assigningBot.stop('SIGINT');
-  submittingBot.stop('SIGINT');
+  try {
+    if (assigningBot) assigningBot.stop('SIGINT');
+  } catch (error) {
+    // Ignore
+  }
+  try {
+    if (submittingBot) submittingBot.stop('SIGINT');
+  } catch (error) {
+    // Ignore
+  }
 });
 process.once('SIGTERM', () => {
-  assigningBot.stop('SIGTERM');
-  submittingBot.stop('SIGTERM');
+  try {
+    if (assigningBot) assigningBot.stop('SIGTERM');
+  } catch (error) {
+    // Ignore
+  }
+  try {
+    if (submittingBot) submittingBot.stop('SIGTERM');
+  } catch (error) {
+    // Ignore
+  }
 });
