@@ -91,24 +91,24 @@ router.post('/webhook/notion/submitting', async (req, res) => {
     // Pesan ke Assignee
     const assigneeMessage =
       `Halo ${submission.assigneeName}\n\n` +
-      `📋 Deliverable: ${submission.deliverableName ?? '-'}\n\n` +
-      `📦 Work Package: ${submission.wpName}\n` +
-      `🗓️ Tanggal Submit: ${submittedDateFormatted}\n\n` +
-      `📁 Project: ${submission.projectName}\n\n` +
-      `Telah berhasil dikirim ke ${submission.userName} untuk proses approval.\n` +
+      `Tanggal Submit: ${submittedDateFormatted}\n` +
+      `Deliverable: ${submission.deliverableName ?? '-'}\n` +
+      `User: ${submission.userName}\n` +
+      `Work Package: ${submission.wpName}\n` +      
+      `Project: ${submission.projectName}\n\n` +
+      `Telah berhasil dikirim untuk proses approval.\n` +
       `Mohon tunggu notifikasi selanjutnya.`;
 
     // Pesan ke User (approval request)
     const userMessage =
-      `⚠️ Permintaan Approval Deliverable\n\n` +
-      `Halo ${submission.userName}, mohon periksa deliverable berikut:\n\n` +
-      `📋 Deliverable: ${submission.deliverableName ?? '-'}\n\n` +
-      `📦 Work Package: ${submission.wpName}\n` +
-      `🗓️ Tanggal Submit: ${submittedDateFormatted}\n\n` +
-      `📁 Project: ${submission.projectName}\n\n` +
+      `Permintaan Approval Deliverable\n\n` +
+      `Tanggal Submit: ${submittedDateFormatted}\n` +
+      `Deliverable: ${submission.deliverableName ?? '-'}\n` +
+      `Assignee: ${submission.assigneeName}\n` +
+      `Work Package: ${submission.wpName}\n` +      
+      `Project: ${submission.projectName}\n\n` +
       `Untuk info lebih lengkap klik link dibawah ini:\n` +
-      `🔗 Link: ${submission.pageLink}\n\n` +
-      `Apakah deliverable ini disetujui?`;
+      `🔗 Link: ${submission.pageLink}`;
 
     console.log('🔍 assigneeMessage length:', assigneeMessage?.length);
     console.log('🔍 userMessage length:', userMessage?.length);
