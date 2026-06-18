@@ -153,6 +153,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
         submission.userTelegramId!,
         userMessage,
         {
+          parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [
               [
