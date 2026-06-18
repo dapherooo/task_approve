@@ -98,11 +98,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       `Project: ${submission.projectName}\n\n` +
       `Telah berhasil dikirim untuk proses approval.\n` +
       `Mohon tunggu notifikasi selanjutnya.`;
-
-    const escapeMarkdownV2 = (text: string) =>
-      text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
-    
-    const escapedUrl = escapeMarkdownV2(submission.pageLink);
     
     // Pesan ke User (approval request)
     const userMessage =
@@ -113,7 +108,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       `Work Package: ${submission.wpName}\n` +      
       `Project: ${submission.projectName}\n\n` +
       `Untuk info lebih lengkap klik link dibawah ini:\n` +
-      `Link: [klik link disini](${escapedUrl})`;
+      `Link: ${submission.pageLink}`;
 
     console.log('🔍 assigneeMessage length:', assigneeMessage?.length);
     console.log('🔍 userMessage length:', userMessage?.length);
@@ -158,7 +153,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
         submission.userTelegramId!,
         userMessage,
         {
-          parse_mode: 'MarkdownV2',
           reply_markup: {
             inline_keyboard: [
               [
