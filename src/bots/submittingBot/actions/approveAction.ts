@@ -49,10 +49,10 @@ export const approveAction = async (ctx: BotContext) => {
     await ctx.answerCbQuery('✅ Deliverable disetujui!');
 
     const notifMessage =
-      `📋 Deliverable: ${submission.deliverableName ?? '-'}\n\n` +
-      `📦 Work Package: ${submission.wpName}\n` +
-      `📁 Project: ${submission.projectName}\n\n` +
-      `✅ Deliverable telah disetujui oleh ${submission.user.name} pada tanggal ${respondDateFormatted}.`;
+      `✅ Deliverable telah disetujui oleh ${submission.user.name} pada tanggal ${respondDateFormatted}.\n\n` +
+      `Deliverable: ${submission.deliverableName ?? '-'}\n` +
+      `Work Package: ${submission.wpName}\n` +
+      `Project: ${submission.projectName}`;
 
     // Kirim ke Assignee
     await ctx.telegram.sendMessage(
