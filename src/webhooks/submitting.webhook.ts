@@ -102,13 +102,13 @@ router.post('/webhook/notion/submitting', async (req, res) => {
     // Pesan ke User (approval request)
     const userMessage =
       `Permintaan Approval Deliverable\n\n` +
-      `Tanggal Submit: ${submittedDateFormatted}\n` +
-      `Deliverable: ${submission.deliverableName ?? '-'}\n` +
-      `Assignee: ${submission.assigneeName}\n` +
-      `Work Package: ${submission.wpName}\n` +      
-      `Project: ${submission.projectName}\n\n` +
+      `*Tanggal Submit:* ${submittedDateFormatted}\n` +
+      `*Deliverable:* ${submission.deliverableName ?? '-'}\n` +
+      `*Assignee:* ${submission.assigneeName}\n` +
+      `*Work Package:* ${submission.wpName}\n` +      
+      `*Project:* ${submission.projectName}\n\n` +
       `Untuk info lebih lengkap klik link dibawah ini:\n` +
-      `Link: ${submission.pageLink}`;
+      `*Link:* ${submission.pageLink}`;
 
     console.log('🔍 assigneeMessage length:', assigneeMessage?.length);
     console.log('🔍 userMessage length:', userMessage?.length);
@@ -153,7 +153,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
         submission.userTelegramId!,
         userMessage,
         {
-          parse_mode: `HTML`,
+          parse_mode: `Markdown`,
           reply_markup: {
             inline_keyboard: [
               [
