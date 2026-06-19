@@ -97,6 +97,9 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       `Telah berhasil dikirim untuk proses approval\\.\n` +
       `Mohon tunggu notifikasi selanjutnya\\.`;
 
+    // Format link
+    const safePageLink = submission.pageLink ?? '';
+    
     const userMessage =
       `*Permintaan Approval Deliverable*\n\n` +
       `*Tanggal Submit:* ${escapeMd(submittedDateFormatted)}\n` +
@@ -105,7 +108,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       `*Work Package:* ${escapeMd(submission.wpName ?? '')}\n` +
       `*Project:* ${escapeMd(submission.projectName ?? '')}\n\n` +
       `Untuk info lebih lengkap klik link dibawah ini:\n` +
-      `*Link:* ${escapeMd(submission.pageLink ?? '')}`;
+      `[Klik disini](${safePageLink})`;
 
     console.log('🔍 assigneeMessage length:', assigneeMessage?.length);
     console.log('🔍 userMessage length:', userMessage?.length);
