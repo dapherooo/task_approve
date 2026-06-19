@@ -91,7 +91,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
     // Pesan ke Assignee
     const assigneeMessage =
       `Halo ${submission.assigneeName}\n\n` +
-      `Tanggal Submit: ${submittedDateFormatted}\n` +
+      `<b>Tanggal Submit:</b> ${submittedDateFormatted}\n` +
       `Deliverable: ${submission.deliverableName ?? '-'}\n` +
       `User: ${submission.userName}\n` +
       `Work Package: ${submission.wpName}\n` +      
@@ -153,6 +153,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
         submission.userTelegramId!,
         userMessage,
         {
+          parse_mode: `HTML`,
           reply_markup: {
             inline_keyboard: [
               [
