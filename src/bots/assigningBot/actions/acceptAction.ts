@@ -3,6 +3,11 @@ import { assignmentRepository } from '../../../repositories/assignment.repositor
 import { notionWpService } from '../../../services/notion.wp.service';
 import { activityNotificationService } from '../../../services/activity.notification.service';
 
+function escapeMd(text: string | null | undefined): string {
+  if (!text) return '';
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+}
+
 export const acceptAction = async (ctx: BotContext) => {
   try {
     const assignmentId = parseInt(ctx.match[1]);
@@ -37,18 +42,21 @@ export const acceptAction = async (ctx: BotContext) => {
       hour: '2-digit',
       minute: '2-digit',
     });
-
+    
     // Edit pesan Assignee
     const assigneeLog =
       await assignmentRepository.findAssigneeLog(assignmentId);
+
+    const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
+    
     const updatedMessage =
-      `${assigneeLog?.message}\n` +
-      `----------------------------------------------------\n` +
       `Anda telah menerima tugas ini pada tanggal: ${respondDateFormatted}\n\n` +
       `Untuk Submit Deliverable, silahkan klik link di bawah ini:\n` +
-      `https://form.fillout.com/t/rMSmF6wknyus`;
+      `[Klik disini](${formSubmitDeliverableLink})\n` +
+      `----------------------------------------------------\n` +
+      `${assigneeLog?.message}`;
 
-    await ctx.editMessageText(updatedMessage);
+    await ctx.editMessageText(updatedMessage, { parse_mode: 'MarkdownV2' });
     await ctx.answerCbQuery('✅ Tugas diterima!');
 
     const dueFormatted = assignment.dueDate
@@ -63,12 +71,12 @@ export const acceptAction = async (ctx: BotContext) => {
 
     // Kirim notifikasi ke PM
     const pmMessage =
-      `📦 Work Package: ${assignment.wpId} - ${assignment.wpName}\n` +
-      `🗓️ Due Date: ${dueFormatted}\n\n` +
-      `📁 Project: ${assignment.projectName}\n\n` +
+      `*Work Package:* ${assignment.wpId} - ${assignment.wpName}\n` +
+      `*Due Date:* ${dueFormatted}\n\n` +
+      `*Project:* ${assignment.projectName}\n\n` +
       `Telah diterima oleh ${assignment.assignee.name} pada tanggal ${respondDateFormatted}.`;
 
-    await ctx.telegram.sendMessage(assignment.pm.telegramId!, pmMessage);
+    await ctx.telegram.sendMessage(assignment.pm.telegramId!, pmMessage, { parse_mode: 'MarkdownV2' });
 
     // Tahap 5 - Kirim notifikasi ke masing-masing Assignee Activity
     await activityNotificationService.sendActivityNotifications({
