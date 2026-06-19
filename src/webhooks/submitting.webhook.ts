@@ -6,13 +6,9 @@ import { userRepository } from '../repositories/user.repository';
 
 const router = express.Router();
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function escapeMd(text: string): string {
+  if (!text) return '';
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
 }
 
 router.post('/webhook/notion/submitting', async (req, res) => {
@@ -92,24 +88,24 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       : '-';
 
     const assigneeMessage =
-      `Halo ${escapeHtml(submission.assigneeName ?? '')}\n\n` +
-      `<b>Tanggal Submit:</b> ${escapeHtml(submittedDateFormatted)}\n` +
-      `<b>Deliverable:</b> ${escapeHtml(submission.deliverableName ?? '-')}\n` +
-      `<b>User:</b> ${escapeHtml(submission.userName ?? '')}\n` +
-      `<b>Work Package:</b> ${escapeHtml(submission.wpName ?? '')}\n` +
-      `<b>Project:</b> ${escapeHtml(submission.projectName ?? '')}\n\n` +
-      `Telah berhasil dikirim untuk proses approval.\n` +
-      `Mohon tunggu notifikasi selanjutnya.`;
+      `Halo ${escapeMd(submission.assigneeName ?? '')}\n\n` +
+      `*Tanggal Submit:* ${escapeMd(submittedDateFormatted)}\n` +
+      `*Deliverable:* ${escapeMd(submission.deliverableName ?? '-')}\n` +
+      `*User:* ${escapeMd(submission.userName ?? '')}\n` +
+      `*Work Package:* ${escapeMd(submission.wpName ?? '')}\n` +
+      `*Project:* ${escapeMd(submission.projectName ?? '')}\n\n` +
+      `Telah berhasil dikirim untuk proses approval\\.\n` +
+      `Mohon tunggu notifikasi selanjutnya\\.`;
 
     const userMessage =
-      `<b>Permintaan Approval Deliverable</b>\n\n` +
-      `<b>Tanggal Submit:</b> ${escapeHtml(submittedDateFormatted)}\n` +
-      `<b>Deliverable:</b> ${escapeHtml(submission.deliverableName ?? '-')}\n` +
-      `<b>Assignee:</b> ${escapeHtml(submission.assigneeName ?? '')}\n` +
-      `<b>Work Package:</b> ${escapeHtml(submission.wpName ?? '')}\n` +
-      `<b>Project:</b> ${escapeHtml(submission.projectName ?? '')}\n\n` +
+      `*Permintaan Approval Deliverable*\n\n` +
+      `*Tanggal Submit:* ${escapeMd(submittedDateFormatted)}\n` +
+      `*Deliverable:* ${escapeMd(submission.deliverableName ?? '-')}\n` +
+      `*Assignee:* ${escapeMd(submission.assigneeName ?? '')}\n` +
+      `*Work Package:* ${escapeMd(submission.wpName ?? '')}\n` +
+      `*Project:* ${escapeMd(submission.projectName ?? '')}\n\n` +
       `Untuk info lebih lengkap klik link dibawah ini:\n` +
-      `<b>Link:</b> ${escapeHtml(submission.pageLink ?? '')}`;
+      `*Link:* ${escapeMd(submission.pageLink ?? '')}`;
 
     console.log('🔍 assigneeMessage length:', assigneeMessage?.length);
     console.log('🔍 userMessage length:', userMessage?.length);
@@ -140,7 +136,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       await submittingBot.telegram.sendMessage(
         submission.assigneeTelegramId!,
         assigneeMessage,
-        { parse_mode: 'HTML' }
+        { parse_mode: 'MarkdownV2' }
       );
       console.log('✅ Telegram assignee terkirim');
     } catch (tgError: any) {
@@ -152,7 +148,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
         submission.userTelegramId!,
         userMessage,
         {
-          parse_mode: 'HTML',
+          parse_mode: 'MarkdownV2',
           reply_markup: {
             inline_keyboard: [
               [
