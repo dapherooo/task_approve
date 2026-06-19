@@ -2,6 +2,11 @@ import { BotContext } from '../../../types/context';
 import { submissionRepository } from '../../../repositories/submission.repository';
 import { notionSubmittingService } from '../../../services/notion.submitting.service';
 
+function escapeMd(text: string): string {
+  if (!text) return '';
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+}
+
 export const declineAction = async (ctx: BotContext) => {
   try {
     const submissionId = parseInt(ctx.match[1]);
@@ -45,7 +50,8 @@ export const declineAction = async (ctx: BotContext) => {
     await ctx.editMessageText(
       `${originalMessage}\n` +
         `----------------------------------------------------\n` +
-        `❌ Deliverable ditolak. Silakan tuliskan alasan penolakan:`,
+        `**Silakan tuliskan alasan penolakan:**`,
+        { parse_mode: 'MarkdownV2' }
     );
   } catch (error) {
     console.error('❌ Error decline action:', error);
