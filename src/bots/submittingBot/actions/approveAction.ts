@@ -2,6 +2,11 @@ import { BotContext } from '../../../types/context';
 import { submissionRepository } from '../../../repositories/submission.repository';
 import { notionSubmittingService } from '../../../services/notion.submitting.service';
 
+function escapeMd(text: string): string {
+  if (!text) return '';
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+}
+
 export const approveAction = async (ctx: BotContext) => {
   try {
     const submissionId = parseInt(ctx.match[1]);
@@ -43,25 +48,31 @@ export const approveAction = async (ctx: BotContext) => {
     await ctx.editMessageText(
       `${userLog?.message}\n` +
         `----------------------------------------------------\n` +
-        `✅ Deliverable Work Package telah disetujui oleh ${submission.user.name}\n` +
+        `✅ Deliverable Work Package telah *disetujui* oleh ${submission.user.name}\n` +
         `pada tanggal ${respondDateFormatted}`,
+        { parse_mode: 'MarkdownV2' }
     );
     await ctx.answerCbQuery('✅ Deliverable disetujui!');
 
     const notifMessage =
-      `✅ Deliverable telah disetujui oleh ${submission.user.name} pada tanggal ${respondDateFormatted}.\n\n` +
-      `Deliverable: ${submission.deliverableName ?? '-'}\n` +
-      `Work Package: ${submission.wpName}\n` +
-      `Project: ${submission.projectName}`;
+      `✅ Deliverable telah *disetujui* oleh ${submission.user.name} pada tanggal ${respondDateFormatted}.\n\n` +
+      `*Deliverable:* ${submission.deliverableName ?? '-'}\n` +
+      `*Work Package:* ${submission.wpName}\n` +
+      `*Project:* ${submission.projectName}`;
 
     // Kirim ke Assignee
     await ctx.telegram.sendMessage(
       submission.assignee.telegramId!,
       notifMessage,
+      { parse_mode: 'MarkdownV2' }
     );
 
     // Kirim ke PM
-    await ctx.telegram.sendMessage(submission.pm.telegramId!, notifMessage);
+    await ctx.telegram.sendMessage(
+      submission.pm.telegramId!,
+      notifMessage,
+      { parse_mode: 'MarkdownV2' }
+    );
   } catch (error) {
     console.error('❌ Error approve action:', error);
     await ctx.answerCbQuery('❌ Terjadi kesalahan.');
