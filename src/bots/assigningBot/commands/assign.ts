@@ -40,25 +40,28 @@ export const assignCommand = async (ctx: BotContext) => {
     }
 
     if (result.pmMessage) {
-      await ctx.reply(result.pmMessage);
+      await ctx.reply(result.pmMessage, { parse_mode: 'MarkdownV2' });
     }
 
     if (result.assigneeTelegramId && result.assigneeMessage) {
       await ctx.telegram.sendMessage(
         result.assigneeTelegramId,
         result.assigneeMessage,
-        Markup.inlineKeyboard([
-          [
-            Markup.button.callback(
-              '✅ Terima',
-              `accept_${result.assignment!.id}`,
-            ),
-            Markup.button.callback(
-              '❌ Tolak',
-              `reject_${result.assignment!.id}`,
-            ),
-          ],
-        ]),
+        { 
+          parse_mode: 'MarkdownV2',
+          Markup.inlineKeyboard([
+            [
+              Markup.button.callback(
+                '✅ Terima',
+                `accept_${result.assignment!.id}`,
+              ),
+              Markup.button.callback(
+                '❌ Tolak',
+                `reject_${result.assignment!.id}`,
+              ),
+            ],
+          ]),
+        }
       );
     }
   } catch (error) {
