@@ -6,6 +6,15 @@ import { userRepository } from '../repositories/user.repository';
 
 const router = express.Router();
 
+function escapeHtml(text: string): string {
+  return text
+   .replace(/&/g, '&amp;')
+   .replace(/</g, '&lt;')
+   .replace(/>/g, '&gt;')
+   .replace(/"/g, '&quot;')
+   .replace(/'/g, '&#39;');
+}
+
 router.post('/webhook/notion/submitting', async (req, res) => {
   try {
     const body = req.body;
@@ -99,14 +108,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       `Telah berhasil dikirim untuk proses approval.\n` +
       `Mohon tunggu notifikasi selanjutnya.`;
 
-    function escapeHtml(text: string): string {
-      return text
-       .replace(/&/g, '&amp;')
-       .replace(/</g, '&lt;')
-       .replace(/>/g, '&gt;')
-       .replace(/"/g, '&quot;')
-       .replace(/'/g, '&#39;');
-    }
     // Pesan ke User (approval request)
     const userMessage =
       `<b>Permintaan Approval Deliverable</b>\n\n` +
@@ -126,7 +127,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       await submissionRepository.createAssigneeLog({
         submissionId: saved.id,
         message: assigneeMessage,
-        { parse_mode: 'HTML' }
       });
       console.log('✅ AssigneeLog tersimpan');
     } catch (logError: any) {
@@ -151,6 +151,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       await submittingBot.telegram.sendMessage(
         submission.assigneeTelegramId!,
         assigneeMessage,
+        { parse_mode: 'HTML' }
       );
       console.log('✅ Telegram assignee terkirim');
     } catch (tgError: any) {
