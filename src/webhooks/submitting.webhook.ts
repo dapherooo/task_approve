@@ -92,23 +92,31 @@ router.post('/webhook/notion/submitting', async (req, res) => {
     const assigneeMessage =
       `Halo ${submission.assigneeName}\n\n` +
       `<b>Tanggal Submit:</b> ${submittedDateFormatted}\n` +
-      `Deliverable: ${submission.deliverableName ?? '-'}\n` +
-      `User: ${submission.userName}\n` +
-      `Work Package: ${submission.wpName}\n` +      
-      `Project: ${submission.projectName}\n\n` +
+      `<b>Deliverable:</b> ${submission.deliverableName ?? '-'}\n` +
+      `<b>User:</b> ${submission.userName}\n` +
+      `<b>Work Package:</b> ${submission.wpName}\n` +      
+      `<b>Project:</b> ${submission.projectName}\n\n` +
       `Telah berhasil dikirim untuk proses approval.\n` +
       `Mohon tunggu notifikasi selanjutnya.`;
-    
+
+    function escapeHtml(text: string): string {
+      return text
+       .replace(/&/g, '&amp;')
+       .replace(/</g, '&lt;')
+       .replace(/>/g, '&gt;')
+       .replace(/"/g, '&quot;')
+       .replace(/'/g, '&#39;');
+    }
     // Pesan ke User (approval request)
     const userMessage =
-      `Permintaan Approval Deliverable\n\n` +
-      `Tanggal Submit: ${submittedDateFormatted}\n` +
-      `Deliverable: ${submission.deliverableName ?? '-'}\n` +
-      `Assignee: ${submission.assigneeName}\n` +
-      `Work Package: ${submission.wpName}\n` +      
-      `Project: ${submission.projectName}\n\n` +
+      `<b>Permintaan Approval Deliverable</b>\n\n` +
+      `<b>Tanggal Submit:</b> ${submittedDateFormatted}\n` +
+      `<b>Deliverable:</b> ${submission.deliverableName ?? '-'}\n` +
+      `<b>Assignee:</b> ${submission.assigneeName}\n` +
+      `<b>Work Package:</b> ${submission.wpName}\n` +      
+      `<b>Project:</b> ${submission.projectName}\n\n` +
       `Untuk info lebih lengkap klik link dibawah ini:\n` +
-      `Link: ${submission.pageLink}`;
+      `<b>Link:</b> ${submission.pageLink}`;
 
     console.log('🔍 assigneeMessage length:', assigneeMessage?.length);
     console.log('🔍 userMessage length:', userMessage?.length);
@@ -118,6 +126,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       await submissionRepository.createAssigneeLog({
         submissionId: saved.id,
         message: assigneeMessage,
+        { parse_mode: 'HTML' }
       });
       console.log('✅ AssigneeLog tersimpan');
     } catch (logError: any) {
@@ -153,7 +162,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
         submission.userTelegramId!,
         userMessage,
         {
-          parse_mode: `Markdown`,
+          parse_mode: `HTML`,
           reply_markup: {
             inline_keyboard: [
               [
