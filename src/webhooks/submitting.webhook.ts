@@ -8,11 +8,11 @@ const router = express.Router();
 
 function escapeHtml(text: string): string {
   return text
-   .replace(/&/g, '&amp;')
-   .replace(/</g, '&lt;')
-   .replace(/>/g, '&gt;')
-   .replace(/"/g, '&quot;')
-   .replace(/'/g, '&#39;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 router.post('/webhook/notion/submitting', async (req, res) => {
@@ -25,7 +25,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       return res.status(400).json({ message: 'Page ID tidak ditemukan' });
     }
 
-    // Ambil data dari Notion
     const submission = await notionSubmittingService.getSubmissionByPageId(pageId);
     if (!submission) {
       return res.status(404).json({ message: 'Data submission tidak ditemukan' });
@@ -33,7 +32,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
 
     console.log('📋 Submission data:', submission);
 
-    // Cek apakah sudah ada di PostgreSQL
     const existing = await submissionRepository.findByNotionPageId(
       submission.notionPageId,
     );
@@ -42,7 +40,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       return res.status(200).json({ message: 'Sudah ada' });
     }
 
-    // Cari user di PostgreSQL by telegramId
     const assignee = await userRepository.findByTelegramId(
       submission.assigneeTelegramId ?? '',
     );
@@ -61,7 +58,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       return res.status(404).json({ message: 'User tidak ditemukan' });
     }
 
-    // Simpan ke PostgreSQL
     const saved = await submissionRepository.create({
       notionPageId: submission.notionPageId,
       wpName: submission.wpName,
@@ -78,7 +74,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
 
     console.log('🔍 saved.id:', saved?.id);
 
-    // Update Notion Responds → Submit
     try {
       await notionSubmittingService.updateRespond(pageId, 'Submit');
       console.log('✅ Notion Responds updated to Submit');
@@ -86,7 +81,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       console.error('❌ Gagal update Notion Responds:', notionError?.message);
     }
 
-    // Format tanggal
     const submittedDateFormatted = submission.submittedDate
       ? new Date(submission.submittedDate).toLocaleDateString('id-ID', {
           day: '2-digit',
@@ -97,32 +91,29 @@ router.post('/webhook/notion/submitting', async (req, res) => {
         })
       : '-';
 
-    // Pesan ke Assignee
     const assigneeMessage =
-      `Halo ${submission.assigneeName}\n\n` +
-      `<b>Tanggal Submit:</b> ${submittedDateFormatted}\n` +
-      `<b>Deliverable:</b> ${submission.deliverableName ?? '-'}\n` +
-      `<b>User:</b> ${submission.userName}\n` +
-      `<b>Work Package:</b> ${submission.wpName}\n` +      
-      `<b>Project:</b> ${submission.projectName}\n\n` +
+      `Halo ${escapeHtml(submission.assigneeName ?? '')}\n\n` +
+      `<b>Tanggal Submit:</b> ${escapeHtml(submittedDateFormatted)}\n` +
+      `<b>Deliverable:</b> ${escapeHtml(submission.deliverableName ?? '-')}\n` +
+      `<b>User:</b> ${escapeHtml(submission.userName ?? '')}\n` +
+      `<b>Work Package:</b> ${escapeHtml(submission.wpName ?? '')}\n` +
+      `<b>Project:</b> ${escapeHtml(submission.projectName ?? '')}\n\n` +
       `Telah berhasil dikirim untuk proses approval.\n` +
       `Mohon tunggu notifikasi selanjutnya.`;
 
-    // Pesan ke User (approval request)
     const userMessage =
       `<b>Permintaan Approval Deliverable</b>\n\n` +
-      `<b>Tanggal Submit:</b> ${submittedDateFormatted}\n` +
-      `<b>Deliverable:</b> ${submission.deliverableName ?? '-'}\n` +
-      `<b>Assignee:</b> ${submission.assigneeName}\n` +
-      `<b>Work Package:</b> ${submission.wpName}\n` +      
-      `<b>Project:</b> ${submission.projectName}\n\n` +
+      `<b>Tanggal Submit:</b> ${escapeHtml(submittedDateFormatted)}\n` +
+      `<b>Deliverable:</b> ${escapeHtml(submission.deliverableName ?? '-')}\n` +
+      `<b>Assignee:</b> ${escapeHtml(submission.assigneeName ?? '')}\n` +
+      `<b>Work Package:</b> ${escapeHtml(submission.wpName ?? '')}\n` +
+      `<b>Project:</b> ${escapeHtml(submission.projectName ?? '')}\n\n` +
       `Untuk info lebih lengkap klik link dibawah ini:\n` +
-      `<b>Link:</b> ${submission.pageLink}`;
+      `<b>Link:</b> ${escapeHtml(submission.pageLink ?? '')}`;
 
     console.log('🔍 assigneeMessage length:', assigneeMessage?.length);
     console.log('🔍 userMessage length:', userMessage?.length);
 
-    // Simpan AssigneeLog
     try {
       await submissionRepository.createAssigneeLog({
         submissionId: saved.id,
@@ -133,7 +124,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       console.error('❌ Gagal simpan assigneeLog:', logError?.message);
     }
 
-    // Simpan UserLog
     try {
       await submissionRepository.createUserLog({
         submissionId: saved.id,
@@ -144,7 +134,6 @@ router.post('/webhook/notion/submitting', async (req, res) => {
       console.error('❌ Gagal simpan userLog:', logError?.message);
     }
 
-    // Kirim telegram
     const { submittingBot } = await import('../main');
 
     try {
@@ -163,7 +152,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
         submission.userTelegramId!,
         userMessage,
         {
-          parse_mode: `HTML`,
+          parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [
               [
