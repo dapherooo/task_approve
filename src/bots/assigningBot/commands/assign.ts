@@ -39,26 +39,22 @@ export const assignCommand = async (ctx: BotContext) => {
       return ctx.reply(result.message);
     }
 
+    // Kirim pesan sukses ke PM
     if (result.pmMessage) {
       await ctx.reply(result.pmMessage, { parse_mode: 'MarkdownV2' });
     }
-
+    
+    // Kirim pesan ke Assignee
     if (result.assigneeTelegramId && result.assigneeMessage) {
       await ctx.telegram.sendMessage(
         result.assigneeTelegramId,
         result.assigneeMessage,
-        { 
+        {
           parse_mode: 'MarkdownV2',
-          Markup.inlineKeyboard([
+          ...Markup.inlineKeyboard([
             [
-              Markup.button.callback(
-                '✅ Terima',
-                `accept_${result.assignment!.id}`,
-              ),
-              Markup.button.callback(
-                '❌ Tolak',
-                `reject_${result.assignment!.id}`,
-              ),
+              Markup.button.callback('✅ Accept', `accept_${result.assignment!.id}`),
+              Markup.button.callback('❌ Reject', `reject_${result.assignment!.id}`),
             ],
           ]),
         }
