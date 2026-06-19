@@ -3,6 +3,11 @@ import { submissionRepository } from '../../../repositories/submission.repositor
 import { notionSubmittingService } from '../../../services/notion.submitting.service';
 import { prisma } from '../../../prisma/client';
 
+function escapeMd(text: string | null | undefined): string {
+  if (!text) return '';
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+}
+
 export const declineNotesHandler = async (ctx: BotContext) => {
   const submissionId = ctx.session?.submissionId;
   if (!submissionId) return;
@@ -46,21 +51,22 @@ export const declineNotesHandler = async (ctx: BotContext) => {
   await ctx.reply(
     `${userLog?.message}\n` +
       `-----------------------------------------------\n` +
-      `❌ Deliverable telah ditolak oleh ${submission.user.name}\n` +
+      `❌ Deliverable telah *ditolak* oleh ${submission.user.name}\n` +
       `pada tanggal ${respondDateFormatted}\n` +
-      `Decline Notes:\n${notes}`,
+      `*Decline Notes:*\n${notes}`,
+      { parse_mode: 'MarkdownV2' }
   );
 
   const notifMessage =
-    `Deliverable: ${submission.deliverableName ?? '-'}\n\n` +
-    `Work Package: ${submission.wpName}\n` +
-    `Project: ${submission.projectName}\n\n` +
-    `❌ Deliverable telah ditolak oleh ${submission.user.name} pada tanggal ${respondDateFormatted}.\n` +
-    `Dengan Alasan:\n${notes}`;
+    `*Deliverable:* ${submission.deliverableName ?? '-'}\n\n` +
+    `*Work Package:* ${submission.wpName}\n` +
+    `*Project:* ${submission.projectName}\n\n` +
+    `❌ Deliverable ini telah *ditolak* oleh ${submission.user.name} pada tanggal ${respondDateFormatted}.\n` +
+    `*Dengan Alasan:*\n${notes}`;
 
   // Kirim ke Assignee
-  await ctx.telegram.sendMessage(submission.assignee.telegramId!, notifMessage);
+  await ctx.telegram.sendMessage(submission.assignee.telegramId!, notifMessage, { parse_mode: 'MarkdownV2' });
 
   // Kirim ke PM
-  await ctx.telegram.sendMessage(submission.pm.telegramId!, notifMessage);
+  await ctx.telegram.sendMessage(submission.pm.telegramId!, notifMessage, { parse_mode: 'MarkdownV2' });
 };
