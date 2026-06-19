@@ -2,6 +2,11 @@ import { notionWpService } from './notion.wp.service';
 import { userRepository } from '../repositories/user.repository';
 import { assignmentRepository } from '../repositories/assignment.repository';
 
+function escapeMd(text: string | null | undefined): string {
+  if (!text) return '';
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+}
+
 export const assignmentService = {
   processAssignment: async (wpId: string, pmTelegramId: string) => {
     const failed = (message: string) => ({
@@ -30,7 +35,7 @@ export const assignmentService = {
       return failed(
         `⚠️ Work Package Sudah Ditugaskan\n\n` +
           `Work Package ${wpId} sudah dalam proses penugasan.\n` +
-          `📅 Tanggal: ${date}\n\n` +
+          `Tanggal: ${date}\n\n` +
           `Anda tidak bisa menugaskan ulang Work Package yang sudah berjalan ` +
           `(kecuali status sebelumnya ditolak).`,
       );
@@ -44,7 +49,7 @@ export const assignmentService = {
       return failed(
         `⚠️ Work Package Sudah Ditugaskan\n\n` +
           `Work Package ${wpId} sudah dalam proses penugasan.\n` +
-          `📅 Tanggal: ${existingInDB.assignedAt.toLocaleString('id-ID')}\n\n` +
+          `Tanggal: ${existingInDB.assignedAt.toLocaleString('id-ID')}\n\n` +
           `Anda tidak bisa menugaskan ulang Work Package yang sudah berjalan ` +
           `(kecuali status sebelumnya ditolak).`,
       );
@@ -77,12 +82,6 @@ export const assignmentService = {
       assigneeId: assignee.id,
     });
 
-    const pmMessage =
-      `✅ Penugasan Berhasil!\n\n` +
-      `📦 Work Package: ${wpId} - ${wp.wpName}\n\n` +
-      `📁 Project: ${wp.projectName}\n\n` +
-      `Menunggu respon dari Assignee: ${assignee.name}.`;
-
     const dueFormatted = wp.dueDate
       ? new Date(wp.dueDate).toLocaleDateString('id-ID', {
           day: '2-digit',
@@ -93,14 +92,28 @@ export const assignmentService = {
         })
       : '-';
 
+    const safeWpId = escapeMd(wpId);
+    const safeWpName = escapeMd(wp.wpName);
+    const safeProject = escapeMd(wp.projectName);
+    const safeAssigneeName = escapeMd(assignee.name);
+    const safePmName = escapeMd(pm.name);
+    const safeDue = escapeMd(dueFormatted);
+    const safeLinkPage = wp.linkPage ?? '';
+
+    const pmMessage =
+      `*Penugasan Berhasil!*\n\n` +
+      `*Work Package:* ${wpId} - ${wp.wpName}\n` +
+      `*Project:* ${wp.projectName}\n\n` +
+      `Menunggu respon dari Assignee: ${assignee.name}.`;
+
     const assigneeMessage =
       `Halo ${assignee.name}, ada penugasan baru untuk.\n\n` +
-      `📦 Work Package: ${wpId} - ${wp.wpName}\n` +
-      `🗓️ Due Date: ${dueFormatted}\n\n` +
-      `📁 Project: ${wp.projectName}\n` +
-      `👤 Project Manager: ${pm.name}\n\n` +
+      `*Work Package:* ${wpId} - ${wp.wpName}\n` +
+      `*Due Date:* ${dueFormatted}\n\n` +
+      `*Project:* ${wp.projectName}\n` +
+      `*Project Manager:* ${pm.name}\n\n` +
       `Untuk info lebih lengkap, silahkan klik link di bawah ini:\n` +
-      `🔗 Link: ${wp.linkPage}\n\n` +
+      `[Klik disini](${safeLinkPage})\n\n` +
       `Apakah anda menerima tugas ini?`;
 
     await assignmentRepository.createPMLog({
