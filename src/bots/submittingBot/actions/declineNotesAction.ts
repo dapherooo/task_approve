@@ -52,9 +52,9 @@ export const declineNotesHandler = async (ctx: BotContext) => {
   );
 
   const notifMessage =
-    `📋 Deliverable: ${submission.deliverableName ?? '-'}\n\n` +
-    `📦 Work Package: ${submission.wpName}\n` +
-    `📁 Project: ${submission.projectName}\n\n` +
+    `Deliverable: ${submission.deliverableName ?? '-'}\n\n` +
+    `Work Package: ${submission.wpName}\n` +
+    `Project: ${submission.projectName}\n\n` +
     `❌ Deliverable telah ditolak oleh ${submission.user.name} pada tanggal ${respondDateFormatted}.\n` +
     `Dengan Alasan:\n${notes}`;
 
