@@ -29,10 +29,14 @@ export const acceptAction = async (ctx: BotContext) => {
 
     // Update Notion
     if (assignment.notionPageId) {
-      await notionWpService.updateAssigningRespond(
-        assignment.notionPageId,
-        'Accept',
-      );
+      try {
+        await notionWpService.updateAssigningRespond(
+          assignment.notionPageId,
+          'Accept',
+        );
+      } catch (notionError: any) {
+        console.log('⚠️ Skip update Notion:', notionError?.message);
+      }
     }
 
     const respondDateFormatted = respondAt.toLocaleString('id-ID', {
@@ -42,41 +46,55 @@ export const acceptAction = async (ctx: BotContext) => {
       hour: '2-digit',
       minute: '2-digit',
     });
-    
-    // Edit pesan Assignee
-    const assigneeLog =
-      await assignmentRepository.findAssigneeLog(assignmentId);
-
-    const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
-    
-    const updatedMessage =
-      `Anda telah menerima tugas ini pada tanggal: ${respondDateFormatted}\n\n` +
-      `Untuk Submit Deliverable, silahkan klik link di bawah ini:\n` +
-      `[Klik disini](${formSubmitDeliverableLink})\n` +
-      `----------------------------------------------------\n` +
-      `${assigneeLog?.message}`;
-
-    await ctx.editMessageText(updatedMessage, { parse_mode: 'MarkdownV2' });
-    await ctx.answerCbQuery('✅ Tugas diterima!');
 
     const dueFormatted = assignment.dueDate
       ? new Date(assignment.dueDate).toLocaleDateString('id-ID', {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',
-          // hour: '2-digit',
-          // minute: '2-digit',
         })
       : '-';
 
+    // Escape variabel dinamis
+    const safeWpId = escapeMd(assignment.wpId);
+    const safeWpName = escapeMd(assignment.wpName);
+    const safeProject = escapeMd(assignment.projectName);
+    const safeAssigneeName = escapeMd(assignment.assignee.name);
+    const safeRespondDate = escapeMd(respondDateFormatted);
+    const safeDue = escapeMd(dueFormatted);
+    const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
+
+    // Edit pesan Assignee
+    const assigneeLog = await assignmentRepository.findAssigneeLog(assignmentId);
+    const originalMessage = assigneeLog?.message ?? '';
+    const messageWithoutGreeting = originalMessage
+      .split('\n')
+      .slice(1)
+      .join('\n')
+      .trimStart();
+
+    const updatedMessage =
+      `Anda telah menerima tugas ini pada tanggal: ${safeRespondDate}\n\n` +
+      `Untuk Submit Deliverable, silahkan klik link di bawah ini:\n` +
+      `[Klik disini](${formSubmitDeliverableLink})\n\n` +
+      `${messageWithoutGreeting}`;
+
+    await ctx.editMessageText(updatedMessage, { parse_mode: 'MarkdownV2' });
+    await ctx.answerCbQuery('✅ Tugas diterima!');
+
     // Kirim notifikasi ke PM
     const pmMessage =
-      `*Work Package:* ${assignment.wpId} - ${assignment.wpName}\n` +
-      `*Due Date:* ${dueFormatted}\n\n` +
-      `*Project:* ${assignment.projectName}\n\n` +
-      `Telah diterima oleh ${assignment.assignee.name} pada tanggal ${respondDateFormatted}.`;
+      `*Penugasan Diterima\\!*\n\n` +
+      `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
+      `*Due Date:* ${safeDue}\n\n` +
+      `*Project:* ${safeProject}\n\n` +
+      `Telah diterima oleh ${safeAssigneeName} pada tanggal ${safeRespondDate}\\.`;
 
-    await ctx.telegram.sendMessage(assignment.pm.telegramId!, pmMessage, { parse_mode: 'MarkdownV2' });
+    await ctx.telegram.sendMessage(
+      assignment.pm.telegramId!,
+      pmMessage,
+      { parse_mode: 'MarkdownV2' }
+    );
 
     // Tahap 5 - Kirim notifikasi ke masing-masing Assignee Activity
     await activityNotificationService.sendActivityNotifications({
@@ -88,6 +106,7 @@ export const acceptAction = async (ctx: BotContext) => {
         await ctx.telegram.sendMessage(telegramId, message);
       },
     });
+
   } catch (error) {
     console.error('❌ Error accept action:', error);
     await ctx.answerCbQuery('❌ Terjadi kesalahan.');
