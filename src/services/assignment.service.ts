@@ -23,9 +23,7 @@ export const assignmentService = {
     if (!wp) return failed('❌ ID WP tidak ditemukan.');
 
     if (wp.pmTelegramId !== pmTelegramId)
-      return failed(
-        '⛔ Akses ditolak. Anda bukan Project Manager dari WP ini.',
-      );
+      return failed('⛔ Akses ditolak. Anda bukan Project Manager dari WP ini.');
 
     const existing = await notionWpService.findAssigningByWpId(wpId);
     if (existing && existing.respond === 'Accept') {
@@ -34,10 +32,10 @@ export const assignmentService = {
         : '-';
       return failed(
         `⚠️ Work Package Sudah Ditugaskan\n\n` +
-          `Work Package ${wpId} sudah dalam proses penugasan.\n` +
-          `Tanggal: ${date}\n\n` +
-          `Anda tidak bisa menugaskan ulang Work Package yang sudah berjalan ` +
-          `(kecuali status sebelumnya ditolak).`,
+        `Work Package ${wpId} sudah dalam proses penugasan.\n` +
+        `Tanggal: ${date}\n\n` +
+        `Anda tidak bisa menugaskan ulang Work Package yang sudah berjalan ` +
+        `(kecuali status sebelumnya ditolak).`,
       );
     }
 
@@ -48,22 +46,19 @@ export const assignmentService = {
     ) {
       return failed(
         `⚠️ Work Package Sudah Ditugaskan\n\n` +
-          `Work Package ${wpId} sudah dalam proses penugasan.\n` +
-          `Tanggal: ${existingInDB.assignedAt.toLocaleString('id-ID')}\n\n` +
-          `Anda tidak bisa menugaskan ulang Work Package yang sudah berjalan ` +
-          `(kecuali status sebelumnya ditolak).`,
+        `Work Package ${wpId} sudah dalam proses penugasan.\n` +
+        `Tanggal: ${existingInDB.assignedAt.toLocaleString('id-ID')}\n\n` +
+        `Anda tidak bisa menugaskan ulang Work Package yang sudah berjalan ` +
+        `(kecuali status sebelumnya ditolak).`,
       );
     }
 
-    /// Tahap 2
+    // Tahap 2
     const pm = await userRepository.findByTelegramId(pmTelegramId);
     if (!pm) return failed('❌ Data PM tidak ditemukan di database.');
 
-    const assignee = await userRepository.findByTelegramId(
-      wp.assigneeTelegramId ?? '',
-    );
-    if (!assignee)
-      return failed('❌ Data Assignee tidak ditemukan di database.');
+    const assignee = await userRepository.findByTelegramId(wp.assigneeTelegramId ?? '');
+    if (!assignee) return failed('❌ Data Assignee tidak ditemukan di database.');
 
     // Simpan ke Notion DULU untuk dapat notionPageId
     const notionPageId = await notionWpService.createAssigning({
@@ -72,7 +67,7 @@ export const assignmentService = {
 
     // Simpan ke PostgreSQL dengan notionPageId
     const assignment = await assignmentRepository.create({
-      notionPageId, // ← tambahkan ini
+      notionPageId,
       wpId: wp.id,
       wpName: wp.wpName,
       projectName: wp.projectName ?? undefined,
@@ -87,33 +82,32 @@ export const assignmentService = {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',
-          // hour: '2-digit',
-          //minute: '2-digit',
         })
       : '-';
 
+    // Escape semua variabel dinamis
     const safeWpId = escapeMd(wpId);
     const safeWpName = escapeMd(wp.wpName);
     const safeProject = escapeMd(wp.projectName);
     const safeAssigneeName = escapeMd(assignee.name);
     const safePmName = escapeMd(pm.name);
     const safeDue = escapeMd(dueFormatted);
-    const safeLinkPage = wp.linkPage ?? '';
+    const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
 
     const pmMessage =
-      `*Penugasan Berhasil!*\n\n` +
-      `*Work Package:* ${wpId} - ${wp.wpName}\n` +
-      `*Project:* ${wp.projectName}\n\n` +
-      `Menunggu respon dari Assignee: ${assignee.name}.`;
+      `*Penugasan Berhasil\\!*\n\n` +
+      `*Work Package:* ${safeWpId} \\- ${safeWpName}\n\n` +
+      `*Project:* ${safeProject}\n\n` +
+      `Menunggu respon dari Assignee: ${safeAssigneeName}\\.`;
 
     const assigneeMessage =
-      `Halo ${assignee.name}, ada penugasan baru untuk.\n\n` +
-      `*Work Package:* ${wpId} - ${wp.wpName}\n` +
-      `*Due Date:* ${dueFormatted}\n\n` +
-      `*Project:* ${wp.projectName}\n` +
-      `*Project Manager:* ${pm.name}\n\n` +
+      `Halo ${safeAssigneeName}, ada penugasan baru\\.\n\n` +
+      `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
+      `*Due Date:* ${safeDue}\n\n` +
+      `*Project:* ${safeProject}\n` +
+      `*Project Manager:* ${safePmName}\n\n` +
       `Untuk info lebih lengkap, silahkan klik link di bawah ini:\n` +
-      `[Klik disini](${safeLinkPage})\n\n` +
+      `[Klik disini](${formSubmitDeliverableLink})\n\n` +
       `Apakah anda menerima tugas ini?`;
 
     await assignmentRepository.createPMLog({
