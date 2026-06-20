@@ -11,6 +11,7 @@ export const assignCommand = async (ctx: BotContext) => {
     ctx.message?.message_id,
   );
   console.log('👤 dari user:', ctx.from?.id, ctx.from?.username);
+
   if (isProcessing) {
     return ctx.reply('⏳ Sedang memproses permintaan sebelumnya...');
   }
@@ -33,7 +34,12 @@ export const assignCommand = async (ctx: BotContext) => {
   try {
     const result = await assignmentService.processAssignment(wpId, telegramId);
 
-    await ctx.deleteMessage(loadingMsg.message_id);
+    // Hapus loading message
+    try {
+      await ctx.deleteMessage(loadingMsg.message_id);
+    } catch {
+      // skip jika pesan sudah tidak ada
+    }
 
     if (!result.success) {
       return ctx.reply(result.message);
@@ -43,7 +49,7 @@ export const assignCommand = async (ctx: BotContext) => {
     if (result.pmMessage) {
       await ctx.reply(result.pmMessage, { parse_mode: 'MarkdownV2' });
     }
-    
+
     // Kirim pesan ke Assignee
     if (result.assigneeTelegramId && result.assigneeMessage) {
       await ctx.telegram.sendMessage(
@@ -60,14 +66,17 @@ export const assignCommand = async (ctx: BotContext) => {
         }
       );
     }
+
   } catch (error) {
-  try {
-    await ctx.deleteMessage(loadingMsg.message_id);
-  } catch {
-    // skip
+    // Hapus loading message jika error
+    try {
+      await ctx.deleteMessage(loadingMsg.message_id);
+    } catch {
+      // skip
+    }
+    console.error('❌ Error assign command:', error);
+    await ctx.reply('❌ Terjadi kesalahan. Silakan coba lagi.');
+  } finally {
+    isProcessing = false;
   }
-  console.error('❌ Error assign command:', error);
-  await ctx.reply('❌ Terjadi kesalahan. Silakan coba lagi.');
-} finally {
-  isProcessing = false;
-}
+};
