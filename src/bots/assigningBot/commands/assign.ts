@@ -61,10 +61,13 @@ export const assignCommand = async (ctx: BotContext) => {
       );
     }
   } catch (error) {
+  try {
     await ctx.deleteMessage(loadingMsg.message_id);
-    console.error('❌ Error assign command:', error);
-    await ctx.reply('❌ Terjadi kesalahan. Silakan coba lagi.');
-  } finally {
-    isProcessing = false;
+  } catch {
+    // skip
   }
-};
+  console.error('❌ Error assign command:', error);
+  await ctx.reply('❌ Terjadi kesalahan. Silakan coba lagi.');
+} finally {
+  isProcessing = false;
+}
