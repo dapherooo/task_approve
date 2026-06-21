@@ -92,11 +92,11 @@ export const assignmentService = {
     const safeAssigneeName = escapeMd(assignee.name);
     const safePmName = escapeMd(pm.name);
     const safeDue = escapeMd(dueFormatted);
-    const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
+    const formSubmitDeliverableLink = escapeMd(wp.linkPage);
 
     const pmMessage =
-      `*Penugasan Berhasil\\!*\n\n` +
-      `*Work Package:* ${safeWpId} \\- ${safeWpName}\n\n` +
+      `*✅ Penugasan Berhasil\\!*\n\n` +
+      `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
       `*Project:* ${safeProject}\n\n` +
       `Menunggu respon dari Assignee: ${safeAssigneeName}\\.`;
 
