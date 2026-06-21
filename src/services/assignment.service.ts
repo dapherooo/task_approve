@@ -92,7 +92,7 @@ export const assignmentService = {
     const safeAssigneeName = escapeMd(assignee.name);
     const safePmName = escapeMd(pm.name);
     const safeDue = escapeMd(dueFormatted);
-    const formSubmitDeliverableLink = escapeMd(wp.linkPage);
+    const notionLinkPage = escapeMd(wp.linkPage);
 
     const pmMessage =
       `*✅ Penugasan Berhasil\\!*\n\n` +
@@ -107,7 +107,7 @@ export const assignmentService = {
       `*Project:* ${safeProject}\n` +
       `*Project Manager:* ${safePmName}\n\n` +
       `Untuk info lebih lengkap, silahkan klik link di bawah ini:\n` +
-      `[Klik disini](${formSubmitDeliverableLink})\n\n` +
+      `[Klik disini](${notionLinkPage})\n\n` +
       `Apakah anda menerima tugas ini?`;
 
     await assignmentRepository.createPMLog({
