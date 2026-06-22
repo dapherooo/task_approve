@@ -59,22 +59,21 @@ export const rejectReasonHandler = async (ctx: BotContext) => {
 
   // Kirim pesan konfirmasi ke Assignee
   await ctx.reply(
-    `*📦 Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
-    `*🗓️ Due Date:* ${safeDue}\n\n` +
-    `*📁 Project:* ${safeProject}\n` +
-    `*👤 Project Manager:* ${safePmName}\n\n` +
-    `----------------------------------------------------\n` +
     `Anda telah menolak tugas ini pada tanggal: ${safeRespondDate}\n` +
-    `Dengan alasan:\n${safeReason}`,
+    `Alasan:\n${safeReason}\n\n` +
+    `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
+    `*Due Date:* ${safeDue}\n\n` +
+    `*Project:* ${safeProject}\n` +
+    `*Project Manager:* ${safePmName}`,
     { parse_mode: 'MarkdownV2' }
   );
 
   // Kirim notifikasi ke PM
   const pmMessage =
-    `❌ *Penugasan Ditolak\\!*\n\n` +
-    `*📦 Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
-    `*🗓️ Due Date:* ${safeDue}\n\n` +
-    `*📁 Project:* ${safeProject}\n\n` +
+    `*Penugasan Ditolak\\!*\n\n` +
+    `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
+    `*Due Date:* ${safeDue}\n` +
+    `*Project:* ${safeProject}\n\n` +
     `Telah ditolak oleh ${safeAssigneeName} pada tanggal ${safeRespondDate}\\.\n` +
     `Dengan alasan:\n${safeReason}`;
 
