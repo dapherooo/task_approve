@@ -45,6 +45,7 @@ export const acceptAction = async (ctx: BotContext) => {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'Asia/Jakarta',
     });
 
     const dueFormatted = assignment.dueDate
