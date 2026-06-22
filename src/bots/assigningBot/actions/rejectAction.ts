@@ -56,6 +56,21 @@ export const rejectAction = async (ctx: BotContext) => {
       .join('\n')
       .trimStart();
 
+    // Ambil teks pesan lama
+const originalMessage =
+  ctx.callbackQuery &&
+  'message' in ctx.callbackQuery &&
+  ctx.callbackQuery.message &&
+  'text' in ctx.callbackQuery.message
+    ? ctx.callbackQuery.message.text
+    : '';
+
+// DEBUG - hapus setelah selesai
+const lines = originalMessage.split('\n');
+lines.forEach((line, index) => {
+  console.log(`Baris ${index + 1} (index ${index}): "${line}"`);
+});
+
     await ctx.editMessageText(
       `${filteredMessage}\n` +
       `----------------------------------------------------\n` +
