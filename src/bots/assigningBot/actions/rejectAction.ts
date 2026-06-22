@@ -40,30 +40,30 @@ export const rejectAction = async (ctx: BotContext) => {
     if (!ctx.session) (ctx as any).session = {};
     ctx.session.assignmentId = assignmentId;
 
-    // Ambil teks pesan lama
-    const originalMessage =
-      ctx.callbackQuery &&
-      'message' in ctx.callbackQuery &&
-      ctx.callbackQuery.message &&
-      'text' in ctx.callbackQuery.message
-        ? ctx.callbackQuery.message.text
-        : '';
+    // Escape variabel dinamis
+    const safeWpId = escapeMd(assignment.wpId);
+    const safeWpName = escapeMd(assignment.wpName);
+    const safeProject = escapeMd(assignment.projectName);
+    const safePmName = escapeMd(assignment.pm.name);
 
-    // DEBUG - hapus setelah selesai
-    const lines = originalMessage.split('\n');
-    lines.forEach((line, index) => {
-      console.log(`Baris ${index + 1} (index ${index}): "${line}"`);
-    });
-
-    // Hapus baris ke-1 (index 0) dan ke-12 (index 11)
-    const filteredMessage = originalMessage
-      .split('\n')
-      .filter((_, index) => index !== 0 && index !== 11)
-      .join('\n')
-      .trimStart();
+    const dueFormatted = assignment.dueDate
+      ? new Date(assignment.dueDate).toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          timeZone: 'Asia/Jakarta',
+        })
+      : '-';
+    const safeDue = escapeMd(dueFormatted);
+    const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
 
     await ctx.editMessageText(
-      `${filteredMessage}\n` +
+      `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
+      `*Due Date:* ${safeDue}\n\n` +
+      `*Project:* ${safeProject}\n` +
+      `*Project Manager:* ${safePmName}\n\n` +
+      `Untuk info lebih lengkap, silahkan klik link di bawah ini:\n` +
+      `[Klik disini](${formSubmitDeliverableLink})\n\n` +
       `----------------------------------------------------\n` +
       `Anda telah menolak tugas ini\\.\n\n` +
       `Silakan tuliskan alasan penolakan Anda:`,
