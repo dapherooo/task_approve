@@ -49,11 +49,10 @@ export const declineNotesHandler = async (ctx: BotContext) => {
 
   // Edit pesan User
   await ctx.reply(
-    `${userLog?.message}\n` +
-      `-----------------------------------------------\n` +
-      `❌ Deliverable telah *ditolak* oleh ${submission.user.name}\n` +
+     `❌ Deliverable telah *ditolak* oleh ${submission.user.name}\n` +
       `pada tanggal ${respondDateFormatted}\n` +
-      `*Decline Notes:*\n${notes}`,
+      `*Decline Notes:*\n${notes}\n\n` +
+      `${userLog?.message}`,
       { parse_mode: 'MarkdownV2' }
   );
 
