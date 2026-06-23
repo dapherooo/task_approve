@@ -62,7 +62,7 @@ export const rejectAction = async (ctx: BotContext) => {
       `*Due Date:* ${safeDue}\n\n` +
       `*Project:* ${safeProject}\n` +
       `*Project Manager:* ${safePmName}\n\n` +
-      `Silakan tuliskan alasan penolakan Anda:`,
+      `➡️ Tuliskan alasan penolakan dengan membalas pesan ini`,
       { parse_mode: 'MarkdownV2' }
     );
 
