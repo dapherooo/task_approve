@@ -30,7 +30,19 @@ export const declineNotesHandler = async (ctx: BotContext) => {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'Asia/Jakarta',
   });
+
+  const submittedDateFormatted = submission.submittedDate
+    ? new Date(submission.submittedDate).toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Jakarta',
+      })
+    : '-';
 
   // Update PostgreSQL
   await submissionRepository.updateUserLog(submissionId, {
@@ -40,32 +52,57 @@ export const declineNotesHandler = async (ctx: BotContext) => {
   });
 
   // Update Notion
-  await notionSubmittingService.updateDeclineNotes(
-    submission.notionPageId,
-    notes,
-  );
+  try {
+    await notionSubmittingService.updateDeclineNotes(submission.notionPageId, notes);
+  } catch (notionError: any) {
+    console.log('⚠️ Skip update Notion:', notionError?.message);
+  }
 
   ctx.session.submissionId = undefined;
 
-  // Edit pesan User
+  // Escape variabel dinamis
+  const safeUserName = escapeMd(submission.user.name);
+  const safeAssigneeName = escapeMd(submission.assignee.name);
+  const safeDeliverable = escapeMd(submission.deliverableName);
+  const safeWpName = escapeMd(submission.wpName);
+  const safeProject = escapeMd(submission.projectName);
+  const safeRespondDate = escapeMd(respondDateFormatted);
+  const safeSubmittedDate = escapeMd(submittedDateFormatted);
+  const safeNotes = escapeMd(notes);
+
+  // Kirim konfirmasi ke User
   await ctx.reply(
-     `❌ Deliverable telah *ditolak* oleh ${submission.user.name}\n` +
-      `pada tanggal ${respondDateFormatted}\n` +
-      `*Decline Notes:*\n${notes}\n\n` +
-      `${userLog?.message}`,
-      { parse_mode: 'MarkdownV2' }
+    `*❌ Deliverable Ditolak*\n\n` +
+    `*Deliverable:* ${safeDeliverable}\n` +
+    `*Work Package:* ${safeWpName}\n` +
+    `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
+    `*Project:* ${safeProject}\n\n` +
+    `Ditolak oleh ${safeUserName} pada tanggal ${safeRespondDate}\n\n` +
+    `*Alasan:*\n${safeNotes}`,
+    { parse_mode: 'MarkdownV2' }
   );
 
+  // Notifikasi ke Assignee dan PM
   const notifMessage =
-    `*Deliverable:* ${submission.deliverableName ?? '-'}\n\n` +
-    `*Work Package:* ${submission.wpName}\n` +
-    `*Project:* ${submission.projectName}\n\n` +
-    `❌ Deliverable ini telah *ditolak* oleh ${submission.user.name} pada tanggal ${respondDateFormatted}.\n` +
-    `*Dengan Alasan:*\n${notes}`;
+    `*❌ Deliverable Ditolak*\n\n` +
+    `*Deliverable:* ${safeDeliverable}\n` +
+    `*Work Package:* ${safeWpName}\n` +
+    `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
+    `*Project:* ${safeProject}\n\n` +
+    `Telah ditolak oleh ${safeUserName} pada tanggal ${safeRespondDate}\\.\n\n` +
+    `*Alasan:*\n${safeNotes}`;
 
   // Kirim ke Assignee
-  await ctx.telegram.sendMessage(submission.assignee.telegramId!, notifMessage, { parse_mode: 'MarkdownV2' });
+  await ctx.telegram.sendMessage(
+    submission.assignee.telegramId!,
+    notifMessage,
+    { parse_mode: 'MarkdownV2' }
+  );
 
   // Kirim ke PM
-  await ctx.telegram.sendMessage(submission.pm.telegramId!, notifMessage, { parse_mode: 'MarkdownV2' });
+  await ctx.telegram.sendMessage(
+    submission.pm.telegramId!,
+    notifMessage,
+    { parse_mode: 'MarkdownV2' }
+  );
 };
