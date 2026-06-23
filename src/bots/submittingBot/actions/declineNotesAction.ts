@@ -73,24 +73,26 @@ export const declineNotesHandler = async (ctx: BotContext) => {
   // Kirim konfirmasi ke User
   await ctx.reply(
     `*❌ Deliverable Ditolak*\n\n` +
+     `Ditolak oleh ${safeUserName} pada tanggal ${safeRespondDate}\n\n` +
+    `*Alasan:*\n${safeNotes}\n\n`
     `*Deliverable:* ${safeDeliverable}\n` +
     `*Work Package:* ${safeWpName}\n` +
     `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
-    `*Project:* ${safeProject}\n\n` +
-    `Ditolak oleh ${safeUserName} pada tanggal ${safeRespondDate}\n\n` +
-    `*Alasan:*\n${safeNotes}`,
+    `*Project:* ${safeProject}`,
     { parse_mode: 'MarkdownV2' }
   );
 
   // Notifikasi ke Assignee dan PM
   const notifMessage =
-    `*❌ Deliverable Ditolak*\n\n` +
+    `🔔 Deliverable ${safeDeliverable} Ditolak oleh ${safeUserName} pada tanggal ${safeRespondDate}\n` +
+    `*Alasan:* ${safeNotes} \n\n` +
     `*Deliverable:* ${safeDeliverable}\n` +
-    `*Work Package:* ${safeWpName}\n` +
     `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
-    `*Project:* ${safeProject}\n\n` +
-    `Telah ditolak oleh ${safeUserName} pada tanggal ${safeRespondDate}\\.\n\n` +
-    `*Alasan:*\n${safeNotes}`;
+    `*Work Package:* ${safeWpName}\n` +    
+    `*Project:* ${safeProject}\n` +
+    `*Assignee:* ${safeAssigneeName}\n` +
+    `*User:* ${safeUserName}\n` +
+    `*Project Manager:* `;
 
   // Kirim ke Assignee
   await ctx.telegram.sendMessage(
