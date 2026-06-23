@@ -73,8 +73,8 @@ export const declineNotesHandler = async (ctx: BotContext) => {
   // Kirim konfirmasi ke User
   await ctx.reply(
     `*❌ Deliverable Ditolak*\n\n` +
-     `Ditolak oleh ${safeUserName} pada tanggal ${safeRespondDate}\n\n` +
-    `*Alasan:*\n${safeNotes}\n\n`
+    `Ditolak oleh ${safeUserName} pada tanggal ${safeRespondDate}\n\n` +
+    `*Alasan:*\n${safeNotes}\n\n` +
     `*Deliverable:* ${safeDeliverable}\n` +
     `*Work Package:* ${safeWpName}\n` +
     `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
