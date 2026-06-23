@@ -62,31 +62,26 @@ export const acceptAction = async (ctx: BotContext) => {
     const safeWpName = escapeMd(assignment.wpName);
     const safeProject = escapeMd(assignment.projectName);
     const safeAssigneeName = escapeMd(assignment.assignee.name);
+    const safePmName = escapeMd(assignment.pm.name);
     const safeRespondDate = escapeMd(respondDateFormatted);
     const safeDue = escapeMd(dueFormatted);
     const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
 
-    // Edit pesan Assignee
-    const assigneeLog = await assignmentRepository.findAssigneeLog(assignmentId);
-    const originalMessage = assigneeLog?.message ?? '';
-    const messageWithoutGreeting = originalMessage
-      .split('\n')
-      .slice(1)
-      .join('\n')
-      .trimStart();
-
+    // Edit pesan Assignee - rebuild dari data assignment
     const updatedMessage =
       `Anda telah menerima tugas ini pada tanggal: ${safeRespondDate}\n\n` +
+      `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
+      `*Due Date:* ${safeDue}\n` +
+      `*Project:* ${safeProject}\n\n` +
       `Untuk Submit Deliverable, silahkan klik link di bawah ini:\n` +
-      `[Klik disini](${formSubmitDeliverableLink})\n\n` +
-      `${messageWithoutGreeting}`;
+      `[Klik disini](${formSubmitDeliverableLink})`;
 
     await ctx.editMessageText(updatedMessage, { parse_mode: 'MarkdownV2' });
     await ctx.answerCbQuery('✅ Tugas diterima!');
 
     // Kirim notifikasi ke PM
     const pmMessage =
-      `*Penugasan Diterima\\!*\n\n` +
+      `*✅ Penugasan Diterima\\!*\n\n` +
       `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
       `*Due Date:* ${safeDue}\n\n` +
       `*Project:* ${safeProject}\n\n` +
@@ -104,8 +99,8 @@ export const acceptAction = async (ctx: BotContext) => {
       wpName: assignment.wpName,
       projectName: assignment.projectName,
       assignedAt: respondAt,
-      sendMessage: async (telegramId, message) => {
-        await ctx.telegram.sendMessage(telegramId, message);
+      sendMessage: async (telegramId, message, options) => {
+        await ctx.telegram.sendMessage(telegramId, message, options);
       },
     });
 
