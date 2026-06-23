@@ -84,6 +84,7 @@ router.post('/webhook/notion/submitting', async (req, res) => {
           year: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
+          timeZone: 'Asia/Jakarta',
         })
       : '-';
 
