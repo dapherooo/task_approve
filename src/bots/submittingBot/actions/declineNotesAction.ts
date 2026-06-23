@@ -63,6 +63,7 @@ export const declineNotesHandler = async (ctx: BotContext) => {
   // Escape variabel dinamis
   const safeUserName = escapeMd(submission.user.name);
   const safeAssigneeName = escapeMd(submission.assignee.name);
+  const safePmName = escapeMd(submission.pm.name);
   const safeDeliverable = escapeMd(submission.deliverableName);
   const safeWpName = escapeMd(submission.wpName);
   const safeProject = escapeMd(submission.projectName);
@@ -92,7 +93,7 @@ export const declineNotesHandler = async (ctx: BotContext) => {
     `*Project:* ${safeProject}\n` +
     `*Assignee:* ${safeAssigneeName}\n` +
     `*User:* ${safeUserName}\n` +
-    `*Project Manager:* `;
+    `*Project Manager:* ${safePmName}\n`;
 
   // Kirim ke Assignee
   await ctx.telegram.sendMessage(
