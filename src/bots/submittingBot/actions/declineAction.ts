@@ -48,9 +48,8 @@ export const declineAction = async (ctx: BotContext) => {
         : '';
 
     await ctx.editMessageText(
-      `${originalMessage}\n` +
-        `----------------------------------------------------\n` +
-        `**Silakan tuliskan alasan penolakan:**`,
+      `${originalMessage}\n\n` +
+        `*➡️ tuliskan alasan penolakan:*`,
         { parse_mode: 'MarkdownV2' }
     );
   } catch (error) {
