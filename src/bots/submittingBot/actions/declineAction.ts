@@ -64,7 +64,7 @@ export const declineAction = async (ctx: BotContext) => {
       `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
       `*Project:* ${safeProject}\n` +
       `*Assignee:* ${safeAssigneeName}\n\n` +
-      `*➡️ Tuliskan alasan penolakan dengan membalas pesan ini.*`,
+      `*➡️ Tuliskan alasan penolakan dengan membalas pesan ini*`,
       { parse_mode: 'MarkdownV2' }
     );
 
