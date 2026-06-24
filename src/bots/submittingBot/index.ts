@@ -19,9 +19,7 @@ export function createSubmittingBot(token: string) {
     return next();
   });
 
-  return bot;
-}
-bot.command('cancel', async (ctx) => {
+  bot.command('cancel', async (ctx) => {
   if (!ctx.session?.submissionId) {
     return ctx.reply('Tidak ada proses yang sedang berjalan.');
   }
@@ -60,4 +58,8 @@ bot.command('cancel', async (ctx) => {
       },
     }
   );
+
+  return bot;
+}
+
 });
