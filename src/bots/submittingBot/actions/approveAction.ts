@@ -1,8 +1,9 @@
 import { BotContext } from '../../../types/context';
 import { submissionRepository } from '../../../repositories/submission.repository';
 import { notionSubmittingService } from '../../../services/notion.submitting.service';
+import { prisma } from '../../../prisma/client';
 
-function escapeMd(text: string): string {
+function escapeMd(text: string | null | undefined): string {
   if (!text) return '';
   return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
 }
@@ -12,9 +13,10 @@ export const approveAction = async (ctx: BotContext) => {
     const submissionId = parseInt(ctx.match[1]);
     const respondAt = new Date();
 
-    const submission = await submissionRepository.findByNotionPageId(
-      await getNotionPageIdBySubmissionId(submissionId),
-    );
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: { assignee: true, user: true, pm: true },
+    });
     if (!submission) return ctx.answerCbQuery('❌ Data tidak ditemukan.');
 
     // Update PostgreSQL
@@ -25,14 +27,12 @@ export const approveAction = async (ctx: BotContext) => {
     });
 
     // Update Notion
-    await notionSubmittingService.updateRespond(
-      submission.notionPageId,
-      'Approve',
-    );
-    await notionSubmittingService.updateApprovalDate(
-      submission.notionPageId,
-      respondAt,
-    );
+    try {
+      await notionSubmittingService.updateRespond(submission.notionPageId, 'Approve');
+      await notionSubmittingService.updateApprovalDate(submission.notionPageId, respondAt);
+    } catch (notionError: any) {
+      console.log('⚠️ Skip update Notion:', notionError?.message);
+    }
 
     const respondDateFormatted = respondAt.toLocaleString('id-ID', {
       day: '2-digit',
@@ -40,25 +40,52 @@ export const approveAction = async (ctx: BotContext) => {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'Asia/Jakarta',
     });
 
-    const userLog = await submissionRepository.findUserLog(submissionId);
+    const submittedDateFormatted = submission.submittedDate
+      ? new Date(submission.submittedDate).toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'Asia/Jakarta',
+        })
+      : '-';
+
+    // Escape variabel dinamis
+    const safeUserName = escapeMd(submission.user.name);
+    const safeAssigneeName = escapeMd(submission.assignee.name);
+    const safePmName = escapeMd(submission.pm.name);
+    const safeDeliverable = escapeMd(submission.deliverableName);
+    const safeWpName = escapeMd(submission.wpName);
+    const safeProject = escapeMd(submission.projectName);
+    const safeRespondDate = escapeMd(respondDateFormatted);
+    const safeSubmittedDate = escapeMd(submittedDateFormatted);
 
     // Edit pesan User
     await ctx.editMessageText(
-      `${userLog?.message}\n` +
-        `----------------------------------------------------\n` +
-        `✅ Deliverable Work Package telah *disetujui* oleh ${submission.user.name}\n` +
-        `pada tanggal ${respondDateFormatted}`,
-        { parse_mode: 'MarkdownV2' }
+      `*✅ Deliverable Disetujui*\n\n` +
+      `Disetujui oleh ${safeUserName} pada tanggal ${safeRespondDate}\n\n` +
+      `*Deliverable:* ${safeDeliverable}\n` +
+      `*Work Package:* ${safeWpName}\n` +
+      `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
+      `*Project:* ${safeProject}`,
+      { parse_mode: 'MarkdownV2' }
     );
     await ctx.answerCbQuery('✅ Deliverable disetujui!');
 
+    // Notifikasi ke Assignee dan PM
     const notifMessage =
-      `✅ Deliverable telah *disetujui* oleh ${submission.user.name} pada tanggal ${respondDateFormatted}.\n\n` +
-      `*Deliverable:* ${submission.deliverableName ?? '-'}\n` +
-      `*Work Package:* ${submission.wpName}\n` +
-      `*Project:* ${submission.projectName}`;
+      `✅ Deliverable ${safeDeliverable} *DISETUJUI* oleh ${safeUserName} pada tanggal ${safeRespondDate}\n\n` +
+      `*Deliverable:* ${safeDeliverable}\n` +
+      `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
+      `*Work Package:* ${safeWpName}\n` +
+      `*Project:* ${safeProject}\n` +
+      `*Assignee:* ${safeAssigneeName}\n` +
+      `*User:* ${safeUserName}\n` +
+      `*Project Manager:* ${safePmName}`;
 
     // Kirim ke Assignee
     await ctx.telegram.sendMessage(
@@ -73,14 +100,9 @@ export const approveAction = async (ctx: BotContext) => {
       notifMessage,
       { parse_mode: 'MarkdownV2' }
     );
+
   } catch (error) {
     console.error('❌ Error approve action:', error);
     await ctx.answerCbQuery('❌ Terjadi kesalahan.');
   }
 };
-
-async function getNotionPageIdBySubmissionId(id: number): Promise<string> {
-  const { prisma } = await import('../../../prisma/client');
-  const submission = await prisma.submission.findUnique({ where: { id } });
-  return submission?.notionPageId ?? '';
-}
