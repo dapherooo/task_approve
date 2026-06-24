@@ -87,7 +87,7 @@ export const declineNotesHandler = async (ctx: BotContext) => {
   // Notifikasi ke Assignee dan PM
   const notifMessage =
     `🔔 Notifikasi Deliverable \n\n` +
-    `Deliverable ${safeDeliverable} **DITOLAK** oleh ${safeUserName} pada tanggal ${safeRespondDate}\n` +
+    `Deliverable ${safeDeliverable} *DITOLAK* oleh ${safeUserName} pada tanggal ${safeRespondDate}\n` +
     `*Alasan:* ${safeNotes} \n\n` +
     `*Deliverable:* ${safeDeliverable}\n` +
     `*Tanggal Submit:* ${safeSubmittedDate}\n` +
