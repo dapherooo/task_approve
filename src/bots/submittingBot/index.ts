@@ -22,9 +22,11 @@ export function createSubmittingBot(token: string) {
   
     const submissionId = ctx.session.submissionId;
     const messageId = ctx.session.approvalMessageId;
+    const originalText = ctx.session.approvalMessageText;
   
     ctx.session.submissionId = undefined;
     ctx.session.approvalMessageId = undefined;
+    ctx.session.approvalMessageText = undefined;
   
     // Hapus pesan /cancel dari user
     try {
@@ -33,17 +35,22 @@ export function createSubmittingBot(token: string) {
       // skip
     }
   
-    if (messageId) {
+    if (messageId && originalText) {
       try {
-        await ctx.telegram.editMessageReplyMarkup(
+        // Kembalikan pesan asli dengan tombol Approve/Decline
+        await ctx.telegram.editMessageText(
           ctx.chat!.id,
           messageId,
           undefined,
+          originalText,
           {
-            inline_keyboard: [[
-              { text: '✅ Approve', callback_data: `approve_${submissionId}` },
-              { text: '❌ Decline', callback_data: `decline_${submissionId}` },
-            ]],
+            parse_mode: 'MarkdownV2',
+            reply_markup: {
+              inline_keyboard: [[
+                { text: '✅ Approve', callback_data: `approve_${submissionId}` },
+                { text: '❌ Decline', callback_data: `decline_${submissionId}` },
+              ]],
+            },
           }
         );
       } catch {
