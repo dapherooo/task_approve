@@ -22,9 +22,12 @@ export const declineAction = async (ctx: BotContext) => {
     if (!ctx.session) (ctx as any).session = {};
     ctx.session.submissionId = submissionId;
 
-    // Simpan message_id untuk keperluan /cancel
+    // Simpan message_id dan teks asli untuk keperluan /cancel
     if (ctx.callbackQuery && 'message' in ctx.callbackQuery) {
       ctx.session.approvalMessageId = ctx.callbackQuery.message?.message_id;
+      if (ctx.callbackQuery.message && 'text' in ctx.callbackQuery.message) {
+        ctx.session.approvalMessageText = ctx.callbackQuery.message.text;
+      }
     }
 
     // Format tanggal
