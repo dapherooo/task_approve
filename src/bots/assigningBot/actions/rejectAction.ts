@@ -1,73 +1,65 @@
 import { BotContext } from '../../../types/context';
-import { assignmentRepository } from '../../../repositories/assignment.repository';
-import { notionWpService } from '../../../services/notion.wp.service';
+import { notionSubmittingService } from '../../../services/notion.submitting.service';
+import { prisma } from '../../../prisma/client';
 
 function escapeMd(text: string | null | undefined): string {
   if (!text) return '';
   return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
 }
 
-export const rejectAction = async (ctx: BotContext) => {
+export const declineAction = async (ctx: BotContext) => {
   try {
-    const assignmentId = parseInt(ctx.match[1]);
-    const respondAt = new Date();
+    const submissionId = parseInt(ctx.match[1]);
 
-    const assignment = await assignmentRepository.findById(assignmentId);
-    if (!assignment) {
-      return ctx.answerCbQuery('❌ Data penugasan tidak ditemukan.');
-    }
-
-    await assignmentRepository.updateAssigneeLog(assignmentId, {
-      respond: 'Reject',
-      respondAt,
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: { assignee: true, user: true, pm: true },
     });
+    if (!submission) return ctx.answerCbQuery('❌ Data tidak ditemukan.');
 
-    await assignmentRepository.updateStatus(assignment.id, 'REJECTED');
-
-    if (assignment.notionPageId) {
-      try {
-        await notionWpService.updateAssigningRespond(
-          assignment.notionPageId,
-          'Reject',
-        );
-      } catch (notionError: any) {
-        console.log('⚠️ Skip update Notion:', notionError?.message);
-      }
-    }
-
-    await ctx.answerCbQuery('❌ Tugas ditolak.');
+    await ctx.answerCbQuery('❌ Deliverable akan ditolak.');
 
     if (!ctx.session) (ctx as any).session = {};
-    ctx.session.assignmentId = assignmentId;
+    ctx.session.submissionId = submissionId;
 
-    // Escape variabel dinamis
-    const safeWpId = escapeMd(assignment.wpId);
-    const safeWpName = escapeMd(assignment.wpName);
-    const safeProject = escapeMd(assignment.projectName);
-    const safePmName = escapeMd(assignment.pm.name);
+    // Simpan message_id untuk keperluan /cancel
+    if (ctx.callbackQuery && 'message' in ctx.callbackQuery) {
+      ctx.session.approvalMessageId = ctx.callbackQuery.message?.message_id;
+    }
 
-    const dueFormatted = assignment.dueDate
-      ? new Date(assignment.dueDate).toLocaleDateString('id-ID', {
+    // Format tanggal
+    const submittedDateFormatted = submission.submittedDate
+      ? new Date(submission.submittedDate).toLocaleDateString('id-ID', {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
           timeZone: 'Asia/Jakarta',
         })
       : '-';
-    const safeDue = escapeMd(dueFormatted);
-    const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
+
+    // Escape variabel dinamis
+    const safeAssigneeName = escapeMd(submission.assignee.name);
+    const safeDeliverable = escapeMd(submission.deliverableName);
+    const safeWpName = escapeMd(submission.wpName);
+    const safeProject = escapeMd(submission.projectName);
+    const safeSubmittedDate = escapeMd(submittedDateFormatted);
 
     await ctx.editMessageText(
-      `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
-      `*Due Date:* ${safeDue}\n\n` +
+      `*Permintaan Approval Deliverable*\n\n` +
+      `*Deliverable:* ${safeDeliverable}\n` +
+      `*Work Package:* ${safeWpName}\n` +
+      `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
       `*Project:* ${safeProject}\n` +
-      `*Project Manager:* ${safePmName}\n\n` +
-      `➡️ Tuliskan alasan penolakan dengan membalas pesan ini`,
+      `*Assignee:* ${safeAssigneeName}\n\n` +
+      `Tulis *alasan penolakan* Anda, lalu kirim:\n` +
+      `_\\(Ketik /cancel untuk membatalkan\\)_`,
       { parse_mode: 'MarkdownV2' }
     );
 
   } catch (error) {
-    console.error('❌ Error reject action:', error);
+    console.error('❌ Error decline action:', error);
     await ctx.answerCbQuery('❌ Terjadi kesalahan.');
   }
 };
