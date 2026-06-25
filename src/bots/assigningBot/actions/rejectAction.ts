@@ -1,65 +1,60 @@
 import { BotContext } from '../../../types/context';
-import { notionSubmittingService } from '../../../services/notion.submitting.service';
-import { prisma } from '../../../prisma/client';
+import { assignmentRepository } from '../../../repositories/assignment.repository';
 
 function escapeMd(text: string | null | undefined): string {
   if (!text) return '';
   return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
 }
 
-export const declineAction = async (ctx: BotContext) => {
+export const rejectAction = async (ctx: BotContext) => {
   try {
-    const submissionId = parseInt(ctx.match[1]);
+    const assignmentId = parseInt(ctx.match[1]);
 
-    const submission = await prisma.submission.findUnique({
-      where: { id: submissionId },
-      include: { assignee: true, user: true, pm: true },
-    });
-    if (!submission) return ctx.answerCbQuery('❌ Data tidak ditemukan.');
+    const assignment = await assignmentRepository.findById(assignmentId);
+    if (!assignment) {
+      return ctx.answerCbQuery('❌ Data penugasan tidak ditemukan.');
+    }
 
-    await ctx.answerCbQuery('❌ Deliverable akan ditolak.');
+    await ctx.answerCbQuery('❌ Penugasan akan ditolak.');
 
     if (!ctx.session) (ctx as any).session = {};
-    ctx.session.submissionId = submissionId;
+    ctx.session.assignmentId = assignmentId;
 
     // Simpan message_id untuk keperluan /cancel
     if (ctx.callbackQuery && 'message' in ctx.callbackQuery) {
-      ctx.session.approvalMessageId = ctx.callbackQuery.message?.message_id;
+      ctx.session.assignmentMessageId = ctx.callbackQuery.message?.message_id;
     }
 
-    // Format tanggal
-    const submittedDateFormatted = submission.submittedDate
-      ? new Date(submission.submittedDate).toLocaleDateString('id-ID', {
+    const dueFormatted = assignment.dueDate
+      ? new Date(assignment.dueDate).toLocaleDateString('id-ID', {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
           timeZone: 'Asia/Jakarta',
         })
       : '-';
 
-    // Escape variabel dinamis
-    const safeAssigneeName = escapeMd(submission.assignee.name);
-    const safeDeliverable = escapeMd(submission.deliverableName);
-    const safeWpName = escapeMd(submission.wpName);
-    const safeProject = escapeMd(submission.projectName);
-    const safeSubmittedDate = escapeMd(submittedDateFormatted);
+    const safeWpId = escapeMd(assignment.wpId);
+    const safeWpName = escapeMd(assignment.wpName);
+    const safeProject = escapeMd(assignment.projectName);
+    const safePmName = escapeMd(assignment.pm.name);
+    const safeDue = escapeMd(dueFormatted);
+    const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
 
     await ctx.editMessageText(
-      `*Permintaan Approval Deliverable*\n\n` +
-      `*Deliverable:* ${safeDeliverable}\n` +
-      `*Work Package:* ${safeWpName}\n` +
-      `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
-      `*Project:* ${safeProject}\n` +
-      `*Assignee:* ${safeAssigneeName}\n\n` +
-      `Tulis *alasan penolakan* Anda, lalu kirim:\n` +
+      `*📦 Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
+      `*🗓️ Due Date:* ${safeDue}\n\n` +
+      `*📁 Project:* ${safeProject}\n` +
+      `*👤 Project Manager:* ${safePmName}\n\n` +
+      `Untuk info lebih lengkap, silahkan klik link di bawah ini:\n` +
+      `[Klik disini](${formSubmitDeliverableLink})\n\n` +
+      `📝 Tolong ketikkan *alasan penolakan* Anda, lalu kirim:\n` +
       `_\\(Ketik /cancel untuk membatalkan\\)_`,
       { parse_mode: 'MarkdownV2' }
     );
 
   } catch (error) {
-    console.error('❌ Error decline action:', error);
+    console.error('❌ Error reject action:', error);
     await ctx.answerCbQuery('❌ Terjadi kesalahan.');
   }
 };
