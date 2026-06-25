@@ -22,6 +22,11 @@ export const declineAction = async (ctx: BotContext) => {
     if (!ctx.session) (ctx as any).session = {};
     ctx.session.submissionId = submissionId;
 
+    // Simpan message_id untuk keperluan /cancel
+    if (ctx.callbackQuery && 'message' in ctx.callbackQuery) {
+      ctx.session.approvalMessageId = ctx.callbackQuery.message?.message_id;
+    }
+
     // Format tanggal
     const submittedDateFormatted = submission.submittedDate
       ? new Date(submission.submittedDate).toLocaleDateString('id-ID', {
@@ -42,13 +47,13 @@ export const declineAction = async (ctx: BotContext) => {
     const safeSubmittedDate = escapeMd(submittedDateFormatted);
 
     await ctx.editMessageText(
-      `*⚠️ Permintaan Approval Deliverable*\n\n` +
-      `*📋 Deliverable:* ${safeDeliverable}\n` +
-      `*📦 Work Package:* ${safeWpName}\n` +
-      `*🗓️ Tanggal Submit:* ${safeSubmittedDate}\n\n` +
-      `*📁 Project:* ${safeProject}\n` +
-      `*👤 Assignee:* ${safeAssigneeName}\n\n` +
-      `📝 Tolong ketikkan *alasan penolakan* Anda, lalu kirim:\n` +
+      `*Permintaan Approval Deliverable*\n\n` +
+      `*Deliverable:* ${safeDeliverable}\n` +
+      `*Work Package:* ${safeWpName}\n` +
+      `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
+      `*Project:* ${safeProject}\n` +
+      `*Assignee:* ${safeAssigneeName}\n\n` +
+      `Tulis *alasan penolakan* Anda, lalu kirim:\n` +
       `_\\(Ketik /cancel untuk membatalkan\\)_`,
       { parse_mode: 'MarkdownV2' }
     );
