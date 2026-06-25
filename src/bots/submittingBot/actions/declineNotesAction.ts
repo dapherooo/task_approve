@@ -21,6 +21,17 @@ export const declineNotesHandler = async (ctx: BotContext) => {
   });
   if (!submission) return;
 
+  // Tambahkan setelah prisma.submission.findUnique
+  const respondAt = new Date();
+  
+  // Update status dan log di PostgreSQL
+  await submissionRepository.updateStatus(submissionId, 'DECLINED');
+  await submissionRepository.updateUserLog(submissionId, {
+    respond: 'Decline',
+    respondAt,
+    declineNotes: notes,
+  });
+
   const userLog = await submissionRepository.findUserLog(submissionId);
   const respondAt = userLog?.respondAt ?? new Date();
 
