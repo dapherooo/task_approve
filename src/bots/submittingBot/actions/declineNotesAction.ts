@@ -21,9 +21,8 @@ export const declineNotesHandler = async (ctx: BotContext) => {
   });
   if (!submission) return;
 
-  // Tambahkan setelah prisma.submission.findUnique
   const respondAt = new Date();
-  
+
   // Update status dan log di PostgreSQL
   await submissionRepository.updateStatus(submissionId, 'DECLINED');
   await submissionRepository.updateUserLog(submissionId, {
@@ -32,8 +31,16 @@ export const declineNotesHandler = async (ctx: BotContext) => {
     declineNotes: notes,
   });
 
-  const userLog = await submissionRepository.findUserLog(submissionId);
-  const respondAt = userLog?.respondAt ?? new Date();
+  // Update Notion
+  try {
+    await notionSubmittingService.updateDeclineNotes(submission.notionPageId, notes);
+    await notionSubmittingService.updateRespond(submission.notionPageId, 'Decline');
+    await notionSubmittingService.updateApprovalDate(submission.notionPageId, respondAt);
+  } catch (notionError: any) {
+    console.log('⚠️ Skip update Notion:', notionError?.message);
+  }
+
+  ctx.session.submissionId = undefined;
 
   const respondDateFormatted = respondAt.toLocaleString('id-ID', {
     day: '2-digit',
@@ -55,22 +62,6 @@ export const declineNotesHandler = async (ctx: BotContext) => {
       })
     : '-';
 
-  // Update PostgreSQL
-  await submissionRepository.updateUserLog(submissionId, {
-    respond: 'Decline',
-    respondAt,
-    declineNotes: notes,
-  });
-
-  // Update Notion
-  try {
-    await notionSubmittingService.updateDeclineNotes(submission.notionPageId, notes);
-  } catch (notionError: any) {
-    console.log('⚠️ Skip update Notion:', notionError?.message);
-  }
-
-  ctx.session.submissionId = undefined;
-
   // Escape variabel dinamis
   const safeUserName = escapeMd(submission.user.name);
   const safeAssigneeName = escapeMd(submission.assignee.name);
@@ -84,29 +75,29 @@ export const declineNotesHandler = async (ctx: BotContext) => {
 
   // Kirim konfirmasi ke User
   await ctx.reply(
-    `*❌ Deliverable Ditolak*\n` +
+    `*❌ Deliverable Ditolak*\n\n` +
     `Ditolak oleh ${safeUserName} pada tanggal ${safeRespondDate}\n` +
     `*Alasan:*\n${safeNotes}\n\n` +
     `*Deliverable:* ${safeDeliverable}\n` +
     `*Tanggal Submit:* ${safeSubmittedDate}\n\n` +
     `*Assignee:* ${safeAssigneeName}\n` +
-    `*Work Package:* ${safeWpName}\n` +    
+    `*Work Package:* ${safeWpName}\n` +
     `*Project:* ${safeProject}`,
     { parse_mode: 'MarkdownV2' }
   );
 
   // Notifikasi ke Assignee dan PM
   const notifMessage =
-    `🔔 Notifikasi Deliverable \n\n` +
-    `Deliverable ${safeDeliverable} *DITOLAK* oleh ${safeUserName} pada tanggal ${safeRespondDate}\n` +
-    `*Alasan:* ${safeNotes} \n\n` +
+    `🔔 *Notifikasi Deliverable*\n\n` +
+    `Deliverable ${safeDeliverable} *DITOLAK* oleh ${safeUserName} pada tanggal ${safeRespondDate}\n\n` +
+    `*Alasan:* ${safeNotes}\n\n` +
     `*Deliverable:* ${safeDeliverable}\n` +
     `*Tanggal Submit:* ${safeSubmittedDate}\n` +
-    `*Work Package:* ${safeWpName}\n` +    
+    `*Work Package:* ${safeWpName}\n` +
     `*Project:* ${safeProject}\n` +
     `*Assignee:* ${safeAssigneeName}\n` +
     `*User:* ${safeUserName}\n` +
-    `*Project Manager:* ${safePmName}\n`;
+    `*Project Manager:* ${safePmName}`;
 
   // Kirim ke Assignee
   await ctx.telegram.sendMessage(
