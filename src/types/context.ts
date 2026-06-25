@@ -19,6 +19,7 @@ export interface BotSession extends Scenes.SceneSession {
   assignmentId?: number;
   submissionId?: number;
   approvalMessageId?: number;
+  approvalMessageText?: string;
   assignmentMessageId?: number;
   step?: string;
 }
