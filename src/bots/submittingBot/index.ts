@@ -19,15 +19,21 @@ export function createSubmittingBot(token: string) {
       return ctx.reply('Tidak ada proses yang sedang berjalan\\.',
         { parse_mode: 'MarkdownV2' });
     }
-
+  
     const submissionId = ctx.session.submissionId;
     const messageId = ctx.session.approvalMessageId;
-
+  
     ctx.session.submissionId = undefined;
     ctx.session.approvalMessageId = undefined;
-
+  
+    // Hapus pesan /cancel dari user
+    try {
+      await ctx.deleteMessage();
+    } catch {
+      // skip
+    }
+  
     if (messageId) {
-      // Edit pesan lama kembali dengan tombol Approve/Decline
       try {
         await ctx.telegram.editMessageReplyMarkup(
           ctx.chat!.id,
@@ -40,8 +46,6 @@ export function createSubmittingBot(token: string) {
             ]],
           }
         );
-        await ctx.reply('✅ Dibatalkan\\. Silakan pilih kembali di pesan sebelumnya\\.', 
-          { parse_mode: 'MarkdownV2' });
       } catch {
         await ctx.reply(
           '✅ Dibatalkan\\. Silakan pilih kembali:',
@@ -56,19 +60,6 @@ export function createSubmittingBot(token: string) {
           }
         );
       }
-    } else {
-      await ctx.reply(
-        '✅ Dibatalkan\\. Silakan pilih kembali:',
-        {
-          parse_mode: 'MarkdownV2',
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '✅ Approve', callback_data: `approve_${submissionId}` },
-              { text: '❌ Decline', callback_data: `decline_${submissionId}` },
-            ]],
-          },
-        }
-      );
     }
   });
 
