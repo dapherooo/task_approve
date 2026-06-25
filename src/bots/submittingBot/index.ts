@@ -7,40 +7,78 @@ import { declineNotesHandler } from './actions/declineNotesAction';
 export function createSubmittingBot(token: string) {
   const bot = new Telegraf<BotContext>(token);
 
-  bot.use(session()); // ← pastikan ini ada
+  bot.use(session());
 
+  // Actions
   bot.action(/approve_(\d+)/, approveAction);
   bot.action(/decline_(\d+)/, declineAction);
 
+  // Command cancel - harus sebelum bot.on('text')
+  bot.command('cancel', async (ctx) => {
+    if (!ctx.session?.submissionId) {
+      return ctx.reply('Tidak ada proses yang sedang berjalan\\.',
+        { parse_mode: 'MarkdownV2' });
+    }
+
+    const submissionId = ctx.session.submissionId;
+    const messageId = ctx.session.approvalMessageId;
+
+    ctx.session.submissionId = undefined;
+    ctx.session.approvalMessageId = undefined;
+
+    if (messageId) {
+      // Edit pesan lama kembali dengan tombol Approve/Decline
+      try {
+        await ctx.telegram.editMessageReplyMarkup(
+          ctx.chat!.id,
+          messageId,
+          undefined,
+          {
+            inline_keyboard: [[
+              { text: '✅ Approve', callback_data: `approve_${submissionId}` },
+              { text: '❌ Decline', callback_data: `decline_${submissionId}` },
+            ]],
+          }
+        );
+        await ctx.reply('✅ Dibatalkan\\. Silakan pilih kembali di pesan sebelumnya\\.', 
+          { parse_mode: 'MarkdownV2' });
+      } catch {
+        await ctx.reply(
+          '✅ Dibatalkan\\. Silakan pilih kembali:',
+          {
+            parse_mode: 'MarkdownV2',
+            reply_markup: {
+              inline_keyboard: [[
+                { text: '✅ Approve', callback_data: `approve_${submissionId}` },
+                { text: '❌ Decline', callback_data: `decline_${submissionId}` },
+              ]],
+            },
+          }
+        );
+      }
+    } else {
+      await ctx.reply(
+        '✅ Dibatalkan\\. Silakan pilih kembali:',
+        {
+          parse_mode: 'MarkdownV2',
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '✅ Approve', callback_data: `approve_${submissionId}` },
+              { text: '❌ Decline', callback_data: `decline_${submissionId}` },
+            ]],
+          },
+        }
+      );
+    }
+  });
+
+  // Handler teks - setelah command cancel
   bot.on('text', async (ctx, next) => {
     if (ctx.session?.submissionId) {
       return declineNotesHandler(ctx);
     }
     return next();
   });
-
-  bot.command('cancel', async (ctx) => {
-  if (!ctx.session?.submissionId) {
-    return ctx.reply('Tidak ada proses yang sedang berjalan\\.',
-      { parse_mode: 'MarkdownV2' });
-  }
-
-  const submissionId = ctx.session.submissionId;
-  ctx.session.submissionId = undefined;
-
-  await ctx.reply(
-    '✅ Dibatalkan\\. Silakan pilih kembali:',
-    {
-      parse_mode: 'MarkdownV2',
-      reply_markup: {
-        inline_keyboard: [[
-          { text: '✅ Approve', callback_data: `approve_${submissionId}` },
-          { text: '❌ Decline', callback_data: `decline_${submissionId}` },
-        ]],
-      },
-    }
-  );
-});
 
   return bot;
 }
