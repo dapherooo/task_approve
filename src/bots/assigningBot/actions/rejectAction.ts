@@ -20,9 +20,12 @@ export const rejectAction = async (ctx: BotContext) => {
     if (!ctx.session) (ctx as any).session = {};
     ctx.session.assignmentId = assignmentId;
 
-    // Simpan message_id untuk keperluan /cancel
+    // Simpan message_id dan teks asli untuk keperluan /cancel
     if (ctx.callbackQuery && 'message' in ctx.callbackQuery) {
       ctx.session.assignmentMessageId = ctx.callbackQuery.message?.message_id;
+      if (ctx.callbackQuery.message && 'text' in ctx.callbackQuery.message) {
+        ctx.session.assignmentMessageText = ctx.callbackQuery.message.text;
+      }
     }
 
     const dueFormatted = assignment.dueDate
@@ -42,13 +45,13 @@ export const rejectAction = async (ctx: BotContext) => {
     const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
 
     await ctx.editMessageText(
-      `*📦 Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
-      `*🗓️ Due Date:* ${safeDue}\n\n` +
-      `*📁 Project:* ${safeProject}\n` +
-      `*👤 Project Manager:* ${safePmName}\n\n` +
+      `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
+      `*Due Date:* ${safeDue}\n\n` +
+      `*Project:* ${safeProject}\n` +
+      `*Project Manager:* ${safePmName}\n\n` +
       `Untuk info lebih lengkap, silahkan klik link di bawah ini:\n` +
       `[Klik disini](${formSubmitDeliverableLink})\n\n` +
-      `📝 Tolong ketikkan *alasan penolakan* Anda, lalu kirim:\n` +
+      `*Balas pesan ini dengan menulis alasan penolakan anda*\n` +
       `_\\(Ketik /cancel untuk membatalkan\\)_`,
       { parse_mode: 'MarkdownV2' }
     );
