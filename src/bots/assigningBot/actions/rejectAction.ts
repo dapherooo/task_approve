@@ -42,15 +42,12 @@ export const rejectAction = async (ctx: BotContext) => {
     const safeProject = escapeMd(assignment.projectName);
     const safePmName = escapeMd(assignment.pm.name);
     const safeDue = escapeMd(dueFormatted);
-    const formSubmitDeliverableLink = 'https://form.fillout.com/t/rMSmF6wknyus';
-
+    
     await ctx.editMessageText(
       `*Work Package:* ${safeWpId} \\- ${safeWpName}\n` +
       `*Due Date:* ${safeDue}\n\n` +
       `*Project:* ${safeProject}\n` +
       `*Project Manager:* ${safePmName}\n\n` +
-      `Untuk info lebih lengkap, silahkan klik link di bawah ini:\n` +
-      `[Klik disini](${formSubmitDeliverableLink})\n\n` +
       `*Balas pesan ini dengan menulis alasan penolakan anda*\n` +
       `_\\(Ketik /cancel untuk membatalkan\\)_`,
       { parse_mode: 'MarkdownV2' }
