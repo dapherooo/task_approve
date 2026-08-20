@@ -3,11 +3,17 @@ import { app } from './webhooks/user.notion.webhook';
 import { submittingWebhookRouter } from './webhooks/submitting.webhook';
 import { createAssigningBot } from './bots/assigningBot';
 import { createSubmittingBot } from './bots/submittingBot';
+import { Telegraf } from 'telegraf';
+import { BotContext } from './types/context';
 
 const PORT = process.env.PORT || 3000;
 
-// Submitting Bot
-export const submittingBot = createSubmittingBot(
+// Export kedua instance bot di global scope
+export const assigningBot: Telegraf<BotContext> = createAssigningBot(
+  process.env.ASSIGNING_BOT_TOKEN!,
+);
+
+export const submittingBot: Telegraf<BotContext> = createSubmittingBot(
   process.env.SUBMITTING_BOT_TOKEN!,
 );
 
@@ -17,12 +23,11 @@ app.listen(PORT, () => {
   console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
 });
 
-// Jalankan Bot hanya jika SKIP_BOT_LAUNCH tidak diaktifkan
+// Jalankan Bot launch hanya jika SKIP_BOT_LAUNCH tidak diaktifkan
 if (process.env.SKIP_BOT_LAUNCH === 'true') {
   console.log('⚠️ SKIP_BOT_LAUNCH is true. Skipping Telegram bots launch.');
 } else {
-  // Assigning Bot
-  const assigningBot = createAssigningBot(process.env.ASSIGNING_BOT_TOKEN!);
+  // Launch Assigning Bot
   assigningBot
     .launch()
     .then(() => {
@@ -32,7 +37,7 @@ if (process.env.SKIP_BOT_LAUNCH === 'true') {
       console.warn('⚠️  Assigning Bot failed to launch:', (error as Error).message);
     });
 
-  // Submitting Bot
+  // Launch Submitting Bot
   submittingBot
     .launch()
     .then(() => {
@@ -44,28 +49,12 @@ if (process.env.SKIP_BOT_LAUNCH === 'true') {
 
   // Graceful stop
   process.once('SIGINT', () => {
-    try {
-      if (assigningBot) assigningBot.stop('SIGINT');
-    } catch (error) {
-      // Ignore
-    }
-    try {
-      if (submittingBot) submittingBot.stop('SIGINT');
-    } catch (error) {
-      // Ignore
-    }
+    try { assigningBot?.stop('SIGINT'); } catch {}
+    try { submittingBot?.stop('SIGINT'); } catch {}
   });
 
   process.once('SIGTERM', () => {
-    try {
-      if (assigningBot) assigningBot.stop('SIGTERM');
-    } catch (error) {
-      // Ignore
-    }
-    try {
-      if (submittingBot) submittingBot.stop('SIGTERM');
-    } catch (error) {
-      // Ignore
-    }
+    try { assigningBot?.stop('SIGTERM'); } catch {}
+    try { submittingBot?.stop('SIGTERM'); } catch {}
   });
 }
