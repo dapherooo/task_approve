@@ -17,49 +17,55 @@ app.listen(PORT, () => {
   console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
 });
 
-// Assigning Bot
-const assigningBot = createAssigningBot(process.env.ASSIGNING_BOT_TOKEN!);
-assigningBot
-  .launch()
-  .then(() => {
-    console.log('✅ Assigning Bot aktif');
-  })
-  .catch((error) => {
-    console.warn('⚠️  Assigning Bot failed to launch:', (error as Error).message);
+// Jalankan Bot hanya jika SKIP_BOT_LAUNCH tidak diaktifkan
+if (process.env.SKIP_BOT_LAUNCH === 'true') {
+  console.log('⚠️ SKIP_BOT_LAUNCH is true. Skipping Telegram bots launch.');
+} else {
+  // Assigning Bot
+  const assigningBot = createAssigningBot(process.env.ASSIGNING_BOT_TOKEN!);
+  assigningBot
+    .launch()
+    .then(() => {
+      console.log('✅ Assigning Bot aktif');
+    })
+    .catch((error) => {
+      console.warn('⚠️  Assigning Bot failed to launch:', (error as Error).message);
+    });
+
+  // Submitting Bot
+  submittingBot
+    .launch()
+    .then(() => {
+      console.log('✅ Submitting Bot aktif');
+    })
+    .catch((error) => {
+      console.warn('⚠️  Submitting Bot failed to launch:', (error as Error).message);
+    });
+
+  // Graceful stop
+  process.once('SIGINT', () => {
+    try {
+      if (assigningBot) assigningBot.stop('SIGINT');
+    } catch (error) {
+      // Ignore
+    }
+    try {
+      if (submittingBot) submittingBot.stop('SIGINT');
+    } catch (error) {
+      // Ignore
+    }
   });
 
-// Submitting Bot
-submittingBot
-  .launch()
-  .then(() => {
-    console.log('✅ Submitting Bot aktif');
-  })
-  .catch((error) => {
-    console.warn('⚠️  Submitting Bot failed to launch:', (error as Error).message);
+  process.once('SIGTERM', () => {
+    try {
+      if (assigningBot) assigningBot.stop('SIGTERM');
+    } catch (error) {
+      // Ignore
+    }
+    try {
+      if (submittingBot) submittingBot.stop('SIGTERM');
+    } catch (error) {
+      // Ignore
+    }
   });
-
-// Graceful stop
-process.once('SIGINT', () => {
-  try {
-    if (assigningBot) assigningBot.stop('SIGINT');
-  } catch (error) {
-    // Ignore
-  }
-  try {
-    if (submittingBot) submittingBot.stop('SIGINT');
-  } catch (error) {
-    // Ignore
-  }
-});
-process.once('SIGTERM', () => {
-  try {
-    if (assigningBot) assigningBot.stop('SIGTERM');
-  } catch (error) {
-    // Ignore
-  }
-  try {
-    if (submittingBot) submittingBot.stop('SIGTERM');
-  } catch (error) {
-    // Ignore
-  }
-});
+}
